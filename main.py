@@ -17,6 +17,15 @@ logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="templates")
 
 
+def _get_all_platforms(films: list) -> list:
+    seen: dict = {}
+    for film in films:
+        for p in film.streaming_platforms:
+            if p.provider_id not in seen:
+                seen[p.provider_id] = p
+    return sorted(seen.values(), key=lambda p: p.provider_name)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await database.init_db()
@@ -50,6 +59,7 @@ async def index(request: Request):
             "films": films,
             "last_updated": last_updated,
             "is_refreshing": scheduler.get_refresh_state(),
+            "all_platforms": _get_all_platforms(films),
         },
     )
 

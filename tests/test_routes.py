@@ -66,3 +66,52 @@ def test_refresh_rejected_when_busy(client):
         response = client.post("/refresh")
     assert response.status_code == 200
     assert response.json()["status"] == "already_running"
+
+
+def test_get_all_platforms_deduplicates_and_sorts():
+    from main import _get_all_platforms
+    films = [
+        Film(
+            letterboxd_slug="a",
+            title="A",
+            streaming_platforms=[
+                StreamingPlatform(provider_id=8, provider_name="Netflix"),
+                StreamingPlatform(provider_id=337, provider_name="Disney+"),
+            ],
+        ),
+        Film(
+            letterboxd_slug="b",
+            title="B",
+            streaming_platforms=[
+                StreamingPlatform(provider_id=8, provider_name="Netflix"),
+                StreamingPlatform(provider_id=2100, provider_name="Apple TV+"),
+            ],
+        ),
+    ]
+    result = _get_all_platforms(films)
+    assert len(result) == 3
+    assert [p.provider_name for p in result] == ["Apple TV+", "Disney+", "Netflix"]
+
+
+def test_get_all_platforms_empty():
+    from main import _get_all_platforms
+    assert _get_all_platforms([]) == []
+
+
+def test_index_passes_all_platforms_to_template(client):
+    films = [
+        Film(
+            letterboxd_slug="oppenheimer-2023",
+            title="Oppenheimer",
+            tmdb_status="found",
+            streaming_platforms=[StreamingPlatform(provider_id=8, provider_name="Netflix")],
+        )
+    ]
+    with (
+        patch("main.database.get_all_films", new=AsyncMock(return_value=films)),
+        patch("main.database.get_last_updated", new=AsyncMock(return_value=None)),
+    ):
+        response = client.get("/")
+    assert response.status_code == 200
+    assert 'data-provider-id="8"' in response.text
+    assert 'data-platform-ids="8"' in response.text
