@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watchlist</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Watchlist</h1>
+    <div class="meta">
+      {% if last_updated %}
+        Last updated: {{ last_updated }}
+      {% else %}
+        No data yet - trigger a refresh below.
+      {% endif %}
+    </div>
+    <form method="post" action="/refresh">
+      <button type="submit" {% if is_refreshing %}disabled{% endif %}>
+        {% if is_refreshing %}Refreshing...{% else %}Refresh now{% endif %}
+      </button>
+    </form>
+  </header>
+
+  <main>
+    {% if not films %}
+      <p class="empty">No films found. Click "Refresh now" to fetch your watchlist.</p>
+    {% else %}
+      <ul class="film-grid">
+        {% for film in films %}
+        <li class="film-card">
+          {% if film.poster_url %}
+            <img src="{{ film.poster_url }}" alt="{{ film.title }}" loading="lazy" />
+          {% else %}
+            <div class="no-poster">No poster</div>
+          {% endif %}
+          <div class="film-info">
+            <h2>{{ film.title }}{% if film.year %} <span class="year">({{ film.year }})</span>{% endif %}</h2>
+            {% if film.streaming_platforms %}
+              <ul class="platforms">
+                {% for platform in film.streaming_platforms %}
+                <li>
+                  {% if platform.logo_path %}
+                    <img src="{{ platform.logo_path }}" alt="{{ platform.provider_name }}" title="{{ platform.provider_name }}" />
+                  {% else %}
+                    {{ platform.provider_name }}
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            {% elif film.tmdb_status == "not_found" %}
+              <p class="unavailable">Not found on TMDB</p>
+            {% else %}
+              <p class="unavailable">Not streaming in {{ film.country }}</p>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </main>
+</body>
+</html>
