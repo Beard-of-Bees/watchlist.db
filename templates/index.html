@@ -27,9 +27,48 @@
     {% if not films %}
       <p class="empty">No films found. Click "Refresh now" to fetch your watchlist.</p>
     {% else %}
-      <ul class="film-grid">
+
+      {% if all_platforms %}
+      <div class="service-toggles">
+        <div class="chips" id="chips">
+          {% for p in all_platforms %}
+          <button
+            class="chip"
+            data-provider-id="{{ p.provider_id }}"
+            type="button"
+            title="{{ p.provider_name }}"
+          >
+            {% if p.logo_path %}
+            <img src="{{ p.logo_path }}" alt="" />
+            {% endif %}
+            <span>{{ p.provider_name }}</span>
+          </button>
+          {% endfor %}
+        </div>
+        <div class="toggle-actions">
+          <button type="button" id="select-all" class="btn-text">All</button>
+          <button type="button" id="select-none" class="btn-text">None</button>
+        </div>
+      </div>
+      {% endif %}
+
+      <section id="section-streaming" class="film-section" hidden>
+        <h2 class="section-heading">Streaming on your services</h2>
+        <ul class="film-grid" id="grid-streaming"></ul>
+      </section>
+
+      <section id="section-other" class="film-section" hidden>
+        <h2 class="section-heading section-heading--dim">Everything else</h2>
+        <ul class="film-grid" id="grid-other"></ul>
+      </section>
+
+      <ul class="film-grid" id="grid-all">
         {% for film in films %}
-        <li class="film-card">
+        <li
+          class="film-card"
+          data-platform-ids="{{ film.streaming_platforms | map(attribute='provider_id') | join(',') }}"
+          data-index="{{ loop.index0 }}"
+        >
           {% if film.poster_url %}
             <img src="{{ film.poster_url }}" alt="{{ film.title }}" loading="lazy" />
           {% else %}
@@ -58,7 +97,106 @@
         </li>
         {% endfor %}
       </ul>
+
     {% endif %}
   </main>
+
+  <script>
+  (function () {
+    var STORAGE_KEY = 'watchlist_enabled_services';
+
+    var chips = Array.from(document.querySelectorAll('.chip'));
+    var allIds = chips.map(function (c) { return parseInt(c.dataset.providerId); });
+
+    function loadEnabled() {
+      try {
+        var stored = localStorage.getItem(STORAGE_KEY);
+        if (stored === null) return new Set(allIds);
+        return new Set(JSON.parse(stored));
+      } catch (_) {
+        return new Set(allIds);
+      }
+    }
+
+    function saveEnabled(enabled) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(enabled)));
+    }
+
+    var enabled = loadEnabled();
+
+    function applyChips() {
+      chips.forEach(function (chip) {
+        var id = parseInt(chip.dataset.providerId);
+        chip.classList.toggle('active', enabled.has(id));
+      });
+    }
+
+    function classify() {
+      var gridAll = document.getElementById('grid-all');
+      var sectionStreaming = document.getElementById('section-streaming');
+      var sectionOther = document.getElementById('section-other');
+      var gridStreaming = document.getElementById('grid-streaming');
+      var gridOther = document.getElementById('grid-other');
+
+      if (!gridAll) return;
+
+      var allCards = Array.from(document.querySelectorAll('.film-card'));
+
+      var allEnabled = allIds.length === 0 || allIds.every(function (id) { return enabled.has(id); });
+
+      if (allEnabled) {
+        allCards.sort(function (a, b) { return parseInt(a.dataset.index) - parseInt(b.dataset.index); });
+        allCards.forEach(function (card) { gridAll.appendChild(card); });
+        if (sectionStreaming) sectionStreaming.hidden = true;
+        if (sectionOther) sectionOther.hidden = true;
+        gridAll.hidden = false;
+      } else {
+        var streaming = [], other = [];
+        allCards.forEach(function (card) {
+          var raw = card.dataset.platformIds || '';
+          var ids = raw.split(',').filter(Boolean).map(Number);
+          var matches = ids.some(function (id) { return enabled.has(id); });
+          (matches ? streaming : other).push(card);
+        });
+
+        function byIndex(a, b) { return parseInt(a.dataset.index) - parseInt(b.dataset.index); }
+        streaming.sort(byIndex);
+        other.sort(byIndex);
+
+        if (gridStreaming) streaming.forEach(function (c) { gridStreaming.appendChild(c); });
+        if (gridOther) other.forEach(function (c) { gridOther.appendChild(c); });
+
+        gridAll.hidden = true;
+        if (sectionStreaming) sectionStreaming.hidden = streaming.length === 0;
+        if (sectionOther) sectionOther.hidden = other.length === 0;
+      }
+    }
+
+    function update() {
+      applyChips();
+      classify();
+      saveEnabled(enabled);
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var id = parseInt(chip.dataset.providerId);
+        if (enabled.has(id)) {
+          enabled.delete(id);
+        } else {
+          enabled.add(id);
+        }
+        update();
+      });
+    });
+
+    var btnAll = document.getElementById('select-all');
+    var btnNone = document.getElementById('select-none');
+    if (btnAll) btnAll.addEventListener('click', function () { enabled = new Set(allIds); update(); });
+    if (btnNone) btnNone.addEventListener('click', function () { enabled = new Set(); update(); });
+
+    update();
+  })();
+  </script>
 </body>
 </html>
