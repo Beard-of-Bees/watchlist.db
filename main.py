@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 import database
 import scheduler
 from config import settings
+from models import Film, StreamingPlatform
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,8 +18,8 @@ logger = logging.getLogger(__name__)
 templates = Jinja2Templates(directory="templates")
 
 
-def _get_all_platforms(films: list) -> list:
-    seen: dict = {}
+def _get_all_platforms(films: list[Film]) -> list[StreamingPlatform]:
+    seen: dict[int, StreamingPlatform] = {}
     for film in films:
         for p in film.streaming_platforms:
             if p.provider_id not in seen:
