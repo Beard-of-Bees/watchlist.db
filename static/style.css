@@ -83,3 +83,105 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .unavailable { color: #555; font-size: 0.75rem; }
 
 .empty { color: #555; text-align: center; margin-top: 4rem; }
+
+/* --- Service toggles --- */
+
+.service-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem 0.3rem 0.3rem;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #555;
+  transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip.active {
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+.chip:hover {
+  border-color: #666;
+  color: #aaa;
+}
+
+.chip.active:hover {
+  border-color: #888;
+  color: #e0e0e0;
+}
+
+.chip img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.chip.active img {
+  opacity: 1;
+}
+
+.chip:focus-visible {
+  outline: 2px solid #888;
+  outline-offset: 2px;
+}
+
+.toggle-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.btn-text:hover {
+  color: #aaa;
+}
+
+/* --- Section headings --- */
+
+.film-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-heading {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+}
+
+.section-heading--dim {
+  color: #3a3a3a;
+}
