@@ -75,7 +75,7 @@
             <div class="no-poster">No poster</div>
           {% endif %}
           <div class="film-info">
-            <h2>{{ film.title }}{% if film.year %} <span class="year">({{ film.year }})</span>{% endif %}</h2>
+            <h3>{{ film.title }}{% if film.year %} <span class="year">({{ film.year }})</span>{% endif %}</h3>
             {% if film.streaming_platforms %}
               <ul class="platforms">
                 {% for platform in film.streaming_platforms %}
@@ -112,7 +112,9 @@
       try {
         var stored = localStorage.getItem(STORAGE_KEY);
         if (stored === null) return new Set(allIds);
-        return new Set(JSON.parse(stored));
+        var parsed = new Set(JSON.parse(stored));
+        allIds.forEach(function (id) { parsed.add(id); });
+        return parsed;
       } catch (_) {
         return new Set(allIds);
       }
@@ -127,7 +129,9 @@
     function applyChips() {
       chips.forEach(function (chip) {
         var id = parseInt(chip.dataset.providerId);
-        chip.classList.toggle('active', enabled.has(id));
+        var isActive = enabled.has(id);
+        chip.classList.toggle('active', isActive);
+        chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
     }
 

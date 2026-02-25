@@ -68,7 +68,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .film-info { padding: 0.75rem; flex: 1; }
 
-.film-info h2 { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; }
+.film-info h3 { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.5rem; }
 .year { color: #888; font-weight: 400; }
 
 .platforms {
