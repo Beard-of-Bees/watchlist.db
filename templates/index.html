@@ -103,7 +103,7 @@
 
   <script>
   (function () {
-    var STORAGE_KEY = 'watchlist_enabled_services';
+    var STORAGE_KEY = 'watchlist_disabled_services';
 
     var chips = Array.from(document.querySelectorAll('.chip'));
     var allIds = chips.map(function (c) { return parseInt(c.dataset.providerId); });
@@ -112,16 +112,16 @@
       try {
         var stored = localStorage.getItem(STORAGE_KEY);
         if (stored === null) return new Set(allIds);
-        var parsed = new Set(JSON.parse(stored));
-        allIds.forEach(function (id) { parsed.add(id); });
-        return parsed;
+        var disabled = new Set(JSON.parse(stored));
+        return new Set(allIds.filter(function (id) { return !disabled.has(id); }));
       } catch (_) {
         return new Set(allIds);
       }
     }
 
     function saveEnabled(enabled) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(enabled)));
+      var disabled = allIds.filter(function (id) { return !enabled.has(id); });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(disabled));
     }
 
     var enabled = loadEnabled();
