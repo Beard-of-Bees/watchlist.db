@@ -423,6 +423,55 @@
       .catch(function () { setRefreshing(false); });
   });
 })();
+
+// --- Platform badge colours ---
+(function () {
+  var PROVIDER_COLOURS = {
+    8:   { text: '#ef4444', bg: 'rgba(239,68,68,0.12)' },    // Netflix
+    9:   { text: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },   // Amazon Prime Video
+    337: { text: '#93c5fd', bg: 'rgba(147,197,253,0.12)' },  // Disney+
+    350: { text: '#e2e8f0', bg: 'rgba(255,255,255,0.1)' },   // Apple TV+
+    11:  { text: '#c084fc', bg: 'rgba(192,132,252,0.12)' },  // MUBI
+    384: { text: '#eab308', bg: 'rgba(234,179,8,0.12)' },    // Max
+    15:  { text: '#93c5fd', bg: 'rgba(147,197,253,0.12)' },  // Hulu
+    531: { text: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },   // Paramount+
+  };
+  var DEFAULT_COLOUR = { text: '#94a3b8', bg: 'rgba(148,163,184,0.1)' };
+
+  document.querySelectorAll('.platform-badge[data-provider-id]').forEach(function (el) {
+    var id = parseInt(el.dataset.providerId);
+    var c = PROVIDER_COLOURS[id] || DEFAULT_COLOUR;
+    el.style.color = c.text;
+    el.style.background = c.bg;
+  });
+})();
+
+// --- Search ---
+(function () {
+  var input = document.getElementById('search-input');
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    document.querySelectorAll('.film-card').forEach(function (card) {
+      var title = (card.dataset.title || '').toLowerCase();
+      card.style.display = (!q || title.includes(q)) ? '' : 'none';
+    });
+  });
+})();
+
+// --- Grid/list toggle (list view is v2) ---
+(function () {
+  var btnGrid = document.getElementById('view-grid');
+  var btnList = document.getElementById('view-list');
+  if (!btnGrid || !btnList) return;
+  btnGrid.addEventListener('click', function () {
+    btnGrid.classList.remove('text-slate-500');
+    btnGrid.classList.add('text-slate-300');
+    btnList.classList.remove('text-slate-300');
+    btnList.classList.add('text-slate-500');
+  });
+  // List view layout: v2
+})();
 </script>
 </body>
 </html>
