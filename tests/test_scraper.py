@@ -47,6 +47,38 @@ PAGINATED_HTML_PAGE_2 = """
 </body></html>
 """
 
+MODERN_WATCHLIST_HTML = """
+<html><body>
+<div class="poster-grid">
+  <ul class="grid -p125 -scaled128">
+    <li class="griditem">
+      <div class="react-component"
+           data-component-class="LazyPoster"
+           data-item-slug="kung-fu-hustle"
+           data-target-link="/film/kung-fu-hustle/">
+        <div class="poster film-poster">
+          <img class="image" alt="Kung Fu Hustle" />
+        </div>
+      </div>
+    </li>
+    <li class="griditem">
+      <div class="react-component"
+           data-component-class="LazyPoster"
+           data-item-slug="genius-2016"
+           data-target-link="/film/genius-2016/">
+        <div class="poster film-poster">
+          <img class="image" alt="Genius" />
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
+<div class="pagination">
+  <div class="paginate-nextprev"><a class="next" href="/testuser/watchlist/page/2/">Older</a></div>
+</div>
+</body></html>
+"""
+
 
 def test_parse_single_page_no_next():
     films, has_next = _parse_watchlist_page(SINGLE_PAGE_HTML)
@@ -74,6 +106,15 @@ def test_parse_ignores_entries_without_slug():
     """
     films, _ = _parse_watchlist_page(html)
     assert films == []
+
+
+def test_parse_modern_lazy_poster_markup():
+    films, has_next = _parse_watchlist_page(MODERN_WATCHLIST_HTML)
+    assert len(films) == 2
+    assert films[0].slug == "kung-fu-hustle"
+    assert films[0].title == "Kung Fu Hustle"
+    assert films[1].slug == "genius-2016"
+    assert has_next is True
 
 
 @respx.mock

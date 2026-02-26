@@ -45,16 +45,35 @@ def _parse_watchlist_page(html: str) -> tuple[list[ScrapedFilm], bool]:
     """Parse one page of watchlist HTML. Returns (films, has_next_page)."""
     soup = BeautifulSoup(html, "html.parser")
 
-    film_posters = soup.select("li.poster-container div.film-poster")
     films: list[ScrapedFilm] = []
+    seen_slugs: set[str] = set()
 
-    for poster in film_posters:
-        slug = poster.get("data-film-slug", "").strip()
-        if not slug:
+    # Legacy Letterboxd markup.
+    for poster in soup.select("li.poster-container div.film-poster"):
+        slug = (poster.get("data-film-slug") or "").strip()
+        if not slug or slug in seen_slugs:
             continue
         img = poster.find("img")
         title = img["alt"] if img and img.get("alt") else slug
         films.append(ScrapedFilm(slug=slug, title=title))
+        seen_slugs.add(slug)
+
+    # Current Letterboxd watchlist markup uses a React wrapper with data-item-slug.
+    for card in soup.select("div.react-component[data-component-class='LazyPoster']"):
+        slug = (card.get("data-item-slug") or "").strip()
+        if not slug:
+            target_link = (card.get("data-target-link") or "").strip("/")
+            # Expected format: film/<slug>
+            parts = target_link.split("/")
+            if len(parts) >= 2 and parts[0] == "film":
+                slug = parts[1].strip()
+        if not slug or slug in seen_slugs:
+            continue
+
+        img = card.find("img")
+        title = img["alt"] if img and img.get("alt") else (card.get("data-item-name") or slug)
+        films.append(ScrapedFilm(slug=slug, title=title))
+        seen_slugs.add(slug)
 
     has_next = soup.select_one("a.next") is not None
     return films, has_next
