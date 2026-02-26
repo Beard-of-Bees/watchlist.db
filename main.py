@@ -68,6 +68,7 @@ async def index(request: Request):
             "last_updated": last_updated,
             "is_refreshing": scheduler.get_refresh_state(),
             "all_platforms": _get_all_platforms(films),
+            "username": settings.letterboxd_username,
         },
     )
 
