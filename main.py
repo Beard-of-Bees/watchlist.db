@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.requests import Request
@@ -52,7 +53,13 @@ async def health():
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     films = await database.get_all_films()
-    last_updated = await database.get_last_updated()
+    last_updated_raw = await database.get_last_updated()
+    last_updated = None
+    if last_updated_raw:
+        try:
+            last_updated = datetime.fromisoformat(last_updated_raw).strftime("%d %b %y %H:%M")
+        except ValueError:
+            last_updated = last_updated_raw
     return templates.TemplateResponse(
         "index.html",
         {
