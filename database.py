@@ -98,6 +98,21 @@ async def upsert_film(film: Film, db_path: Path = DB_PATH) -> None:
         await db.commit()
 
 
+async def delete_films_not_in_watchlist(
+    watchlist_slugs: list[str], db_path: Path = DB_PATH
+) -> None:
+    async with aiosqlite.connect(db_path) as db:
+        if watchlist_slugs:
+            placeholders = ",".join("?" for _ in watchlist_slugs)
+            await db.execute(
+                f"DELETE FROM films WHERE source = 'letterboxd' AND letterboxd_slug NOT IN ({placeholders})",
+                tuple(watchlist_slugs),
+            )
+        else:
+            await db.execute("DELETE FROM films WHERE source = 'letterboxd'")
+        await db.commit()
+
+
 async def get_all_films(db_path: Path = DB_PATH) -> list[Film]:
     async with aiosqlite.connect(db_path) as db:
         db.row_factory = aiosqlite.Row

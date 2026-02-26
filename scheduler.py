@@ -45,6 +45,10 @@ async def run_refresh(
 
         for film in enriched.values():
             await database.upsert_film(film, db_path)
+        await database.delete_films_not_in_watchlist(
+            [film.slug for film in scraped],
+            db_path,
+        )
 
         logger.info("Refresh complete.")
         return True

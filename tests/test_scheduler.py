@@ -41,6 +41,39 @@ async def test_run_refresh_calls_scraper_and_tmdb(tmp_db):
     assert films[0].tmdb_status == "found"
 
 
+async def test_run_refresh_removes_films_no_longer_in_watchlist(tmp_db):
+    import database
+
+    await database.init_db(tmp_db)
+    await database.upsert_film(Film(letterboxd_slug="keep-film", title="Keep"), tmp_db)
+    await database.upsert_film(Film(letterboxd_slug="remove-film", title="Remove"), tmp_db)
+
+    mock_scraped = [ScrapedFilm(slug="keep-film", title="Keep")]
+    mock_enriched = {
+        "keep-film": Film(
+            letterboxd_slug="keep-film",
+            title="Keep",
+            tmdb_status="found",
+        )
+    }
+
+    with (
+        patch("scheduler.scrape_watchlist", new=AsyncMock(return_value=mock_scraped)),
+        patch("scheduler.enrich_films", new=AsyncMock(return_value=mock_enriched)),
+    ):
+        import scheduler
+
+        await scheduler.run_refresh(
+            username="testuser",
+            tmdb_api_key="key",
+            country="GB",
+            db_path=tmp_db,
+        )
+
+    films = await database.get_all_films(tmp_db)
+    assert [film.letterboxd_slug for film in films] == ["keep-film"]
+
+
 async def test_run_refresh_prevents_concurrent_runs(tmp_db):
     import database
     import scheduler
