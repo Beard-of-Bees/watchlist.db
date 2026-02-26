@@ -22,32 +22,47 @@ async def init_db(db_path: Path = DB_PATH) -> None:
                 tmdb_id             INTEGER,
                 tmdb_status         TEXT DEFAULT 'pending',
                 poster_url          TEXT,
+                genres              TEXT,
                 streaming_platforms TEXT,
+                watch_link          TEXT,
                 country             TEXT,
                 last_checked        TEXT,
                 source              TEXT DEFAULT 'letterboxd'
             )
             """
         )
+        # Safe migration: add new columns if they don't exist yet (for existing installs)
+        for col, definition in [
+            ("genres", "TEXT"),
+            ("watch_link", "TEXT"),
+        ]:
+            try:
+                await db.execute(f"ALTER TABLE films ADD COLUMN {col} {definition}")
+            except Exception:
+                pass  # Column already exists
         await db.commit()
 
 
 async def upsert_film(film: Film, db_path: Path = DB_PATH) -> None:
     platforms_json = json.dumps([p.model_dump() for p in film.streaming_platforms])
+    genres_json = json.dumps(film.genres)
     async with aiosqlite.connect(db_path) as db:
         await db.execute(
             """
             INSERT INTO films
                 (letterboxd_slug, title, year, tmdb_id, tmdb_status,
-                 poster_url, streaming_platforms, country, last_checked, source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 poster_url, genres, streaming_platforms, watch_link,
+                 country, last_checked, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(letterboxd_slug) DO UPDATE SET
                 title               = excluded.title,
                 year                = excluded.year,
                 tmdb_id             = excluded.tmdb_id,
                 tmdb_status         = excluded.tmdb_status,
                 poster_url          = excluded.poster_url,
+                genres              = excluded.genres,
                 streaming_platforms = excluded.streaming_platforms,
+                watch_link          = excluded.watch_link,
                 country             = excluded.country,
                 last_checked        = excluded.last_checked,
                 source              = excluded.source
@@ -59,7 +74,9 @@ async def upsert_film(film: Film, db_path: Path = DB_PATH) -> None:
                 film.tmdb_id,
                 film.tmdb_status,
                 film.poster_url,
+                genres_json,
                 platforms_json,
+                film.watch_link,
                 film.country,
                 film.last_checked,
                 film.source,
@@ -88,6 +105,8 @@ def _row_to_film(row: aiosqlite.Row) -> Film:
     platforms = (
         [StreamingPlatform(**p) for p in json.loads(platforms_raw)] if platforms_raw else []
     )
+    genres_raw = row["genres"]
+    genres = json.loads(genres_raw) if genres_raw else []
     return Film(
         id=row["id"],
         letterboxd_slug=row["letterboxd_slug"],
@@ -96,7 +115,9 @@ def _row_to_film(row: aiosqlite.Row) -> Film:
         tmdb_id=row["tmdb_id"],
         tmdb_status=row["tmdb_status"],
         poster_url=row["poster_url"],
+        genres=genres,
         streaming_platforms=platforms,
+        watch_link=row["watch_link"],
         country=row["country"],
         last_checked=row["last_checked"],
         source=row["source"],
