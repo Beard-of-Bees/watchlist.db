@@ -140,16 +140,16 @@
       <section id="section-streaming" class="space-y-6" hidden>
         <div class="flex items-end justify-between">
           <h1 class="text-2xl font-bold text-slate-100">Streaming on your services</h1>
-          <div class="flex gap-2">
-            <button id="view-grid" type="button" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-300" aria-label="Grid view">
+          <div class="flex gap-2" data-view-toggle-group>
+            <button type="button" data-view-mode-btn="grid" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-300" aria-label="Grid view">
               <span class="material-symbols-outlined" style="font-size:20px">grid_view</span>
             </button>
-            <button id="view-list" type="button" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-500" aria-label="List view">
+            <button type="button" data-view-mode-btn="list" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-500" aria-label="List view">
               <span class="material-symbols-outlined" style="font-size:20px">list</span>
             </button>
           </div>
         </div>
-        <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-streaming"></ul>
+        <ul class="film-items film-items-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-streaming"></ul>
       </section>
 
       <!-- Everything else section -->
@@ -157,13 +157,23 @@
         <div class="flex items-end justify-between">
           <h1 class="text-2xl font-bold text-slate-100">Everything else</h1>
         </div>
-        <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-other"></ul>
+        <ul class="film-items film-items-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-other"></ul>
       </section>
 
       <!-- All films grid (default/unfiltered) -->
       <section id="section-all" class="space-y-6">
-        <h1 class="text-2xl font-bold text-slate-100">Your watchlist</h1>
-        <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-all">
+        <div class="flex items-end justify-between">
+          <h1 class="text-2xl font-bold text-slate-100">Your watchlist</h1>
+          <div class="flex gap-2" data-view-toggle-group>
+            <button type="button" data-view-mode-btn="grid" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-300" aria-label="Grid view">
+              <span class="material-symbols-outlined" style="font-size:20px">grid_view</span>
+            </button>
+            <button type="button" data-view-mode-btn="list" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-500" aria-label="List view">
+              <span class="material-symbols-outlined" style="font-size:20px">list</span>
+            </button>
+          </div>
+        </div>
+        <ul class="film-items film-items-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-all">
           {% for film in films %}
           <li
             class="film-card group cursor-pointer"
@@ -184,38 +194,68 @@
             data-index="{{ loop.index0 }}"
             data-title="{{ film.title | lower }}"
           >
-            <!-- Poster -->
-            <div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-white/5 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-[0_0_20px_rgba(37,106,244,0.2)]">
-              {% if film.poster_url %}
-                <img src="{{ film.poster_url }}" alt="{{ film.title }}" loading="lazy"
-                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-              {% else %}
-                <div class="w-full h-full bg-white/5 flex items-center justify-center text-slate-600 text-xs">No poster</div>
-              {% endif %}
+            <div class="film-card-grid-view">
+              <!-- Poster -->
+              <div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-white/5 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-[0_0_20px_rgba(37,106,244,0.2)]">
+                {% if film.poster_url %}
+                  <img src="{{ film.poster_url }}" alt="{{ film.title }}" loading="lazy"
+                       class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                {% else %}
+                  <div class="w-full h-full bg-white/5 flex items-center justify-center text-slate-600 text-xs">No poster</div>
+                {% endif %}
 
+              </div>
+
+              <!-- Film info -->
+              <div class="mt-2 space-y-1 px-0.5">
+                <h4 class="text-slate-100 font-semibold text-sm truncate">{{ film.title }}</h4>
+                <div class="flex items-center justify-between gap-1">
+                  <span class="text-slate-400 text-xs truncate">
+                    {%- if film.genres %}{{ film.genres[0] }}{% endif -%}
+                    {%- if film.genres and film.year %} • {% endif -%}
+                    {%- if film.year %}{{ film.year }}{% endif -%}
+                  </span>
+                  {% if film.streaming_platforms %}
+                    {% set p = film.streaming_platforms[0] %}
+                    <span class="platform-summary shrink-0 inline-flex items-center gap-1">
+                      <span class="platform-badge shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
+                            data-provider-id="{{ p.provider_id }}">
+                        {{ p.provider_name }}
+                      </span>
+                      <span class="platform-extra text-[10px] text-slate-400 font-semibold" hidden></span>
+                    </span>
+                  {% elif film.tmdb_status == "not_found" %}
+                    <span class="text-[10px] text-slate-600">Not on TMDB</span>
+                  {% endif %}
+                </div>
+              </div>
             </div>
 
-            <!-- Film info -->
-            <div class="mt-2 space-y-1 px-0.5">
-              <h4 class="text-slate-100 font-semibold text-sm truncate">{{ film.title }}</h4>
-              <div class="flex items-center justify-between gap-1">
-                <span class="text-slate-400 text-xs truncate">
-                  {%- if film.genres %}{{ film.genres[0] }}{% endif -%}
-                  {%- if film.genres and film.year %} • {% endif -%}
-                  {%- if film.year %}{{ film.year }}{% endif -%}
-                </span>
-                {% if film.streaming_platforms %}
-                  {% set p = film.streaming_platforms[0] %}
-                  <span class="platform-summary shrink-0 inline-flex items-center gap-1">
-                    <span class="platform-badge shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
-                          data-provider-id="{{ p.provider_id }}">
-                      {{ p.provider_name }}
-                    </span>
-                    <span class="platform-extra text-[10px] text-slate-400 font-semibold" hidden></span>
-                  </span>
-                {% elif film.tmdb_status == "not_found" %}
-                  <span class="text-[10px] text-slate-600">Not on TMDB</span>
-                {% endif %}
+            <div class="film-card-list-view">
+              <div class="film-list-row glass-panel rounded-xl border border-white/5 px-3 py-2">
+                <div class="film-list-thumb" aria-hidden="true">
+                  {% if film.poster_url %}
+                    <img src="{{ film.poster_url }}" alt="" loading="lazy" class="w-full h-full object-cover rounded-md" />
+                  {% else %}
+                    <div class="w-full h-full bg-white/5 rounded-md flex items-center justify-center text-[10px] text-slate-600">No poster</div>
+                  {% endif %}
+                </div>
+                <div class="film-list-title-col min-w-0">
+                  <div class="film-list-col-label">Title</div>
+                  <div class="film-list-title text-slate-100 font-semibold leading-tight truncate">{{ film.title }}</div>
+                </div>
+                <div class="film-list-year-col min-w-0">
+                  <div class="film-list-col-label">Year</div>
+                  <div class="text-sm text-slate-300 truncate">{{ film.year or '—' }}</div>
+                </div>
+                <div class="film-list-genre-col min-w-0">
+                  <div class="film-list-col-label">Genre</div>
+                  <div class="text-sm text-slate-300 truncate">{{ film.genres[0] if film.genres else '—' }}</div>
+                </div>
+                <div class="film-list-services-col min-w-0">
+                  <div class="film-list-col-label">Services</div>
+                  <div class="film-list-services flex flex-wrap gap-1.5" data-list-services></div>
+                </div>
               </div>
             </div>
           </li>
@@ -282,9 +322,12 @@
 <script>
 (function () {
   var STORAGE_KEY = 'watchlist_disabled_services';
+  var VIEW_MODE_KEY = 'watchlist_view_mode';
 
   var checkboxes = Array.from(document.querySelectorAll('.service-checkbox'));
   var allIds = checkboxes.map(function (cb) { return parseInt(cb.dataset.providerId); });
+  var viewModeButtons = Array.from(document.querySelectorAll('[data-view-mode-btn]'));
+  var viewMode = loadViewMode();
 
   // Build provider info map from the dialog's rendered list items
   var providerInfo = {};
@@ -310,6 +353,21 @@
   function saveEnabled(enabled) {
     var disabled = allIds.filter(function (id) { return !enabled.has(id); });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(disabled));
+  }
+
+  function loadViewMode() {
+    try {
+      var stored = localStorage.getItem(VIEW_MODE_KEY);
+      return (stored === 'list' || stored === 'grid') ? stored : 'grid';
+    } catch (_) {
+      return 'grid';
+    }
+  }
+
+  function saveViewMode(mode) {
+    try {
+      localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch (_) {}
   }
 
   var enabled = loadEnabled();
@@ -419,6 +477,47 @@
     return platforms;
   }
 
+  function renderListPlatformSummaries() {
+    document.querySelectorAll('.film-card').forEach(function (card) {
+      var target = card.querySelector('[data-list-services]');
+      if (!target) return;
+
+      var relevant = getRelevantPlatforms(card);
+      if (!relevant.length) {
+        target.innerHTML = '<span class="text-xs text-slate-500">No services</span>';
+        return;
+      }
+
+      target.innerHTML = relevant.map(function (p) {
+        return '<span class="platform-badge film-list-service-badge text-[10px] font-semibold px-2 py-1 rounded whitespace-nowrap" data-provider-id="' +
+          String(p.provider_id) + '">' + escapeText(p.provider_name) + '</span>';
+      }).join('');
+    });
+  }
+
+  function syncViewModeButtons() {
+    viewModeButtons.forEach(function (btn) {
+      var active = btn.dataset.viewModeBtn === viewMode;
+      btn.classList.toggle('text-slate-300', active);
+      btn.classList.toggle('text-slate-500', !active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function applyViewMode() {
+    document.querySelectorAll('.film-items').forEach(function (container) {
+      container.classList.toggle('film-items-list', viewMode === 'list');
+      container.classList.toggle('film-items-grid', viewMode !== 'list');
+    });
+
+    document.querySelectorAll('.film-card').forEach(function (card) {
+      card.classList.toggle('view-list', viewMode === 'list');
+      card.classList.toggle('view-grid', viewMode !== 'list');
+    });
+
+    syncViewModeButtons();
+  }
+
   function updatePlatformSummaries() {
     document.querySelectorAll('.film-card').forEach(function (card) {
       var summary = card.querySelector('.platform-summary');
@@ -447,6 +546,7 @@
       }
     });
 
+    renderListPlatformSummaries();
     if (window.applyPlatformBadgeColours) window.applyPlatformBadgeColours(document);
   }
 
@@ -574,6 +674,7 @@
     classify();
     filterPlatforms();
     updatePlatformSummaries();
+    applyViewMode();
     saveEnabled(enabled);
   }
 
@@ -619,6 +720,17 @@
         e.preventDefault();
         openFilmDialog(card);
       }
+    });
+  });
+
+  viewModeButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var nextMode = btn.dataset.viewModeBtn;
+      if (nextMode !== 'grid' && nextMode !== 'list') return;
+      if (viewMode === nextMode) return;
+      viewMode = nextMode;
+      saveViewMode(viewMode);
+      applyViewMode();
     });
   });
 
@@ -707,19 +819,6 @@
   });
 })();
 
-// --- Grid/list toggle (list view is v2) ---
-(function () {
-  var btnGrid = document.getElementById('view-grid');
-  var btnList = document.getElementById('view-list');
-  if (!btnGrid || !btnList) return;
-  btnGrid.addEventListener('click', function () {
-    btnGrid.classList.remove('text-slate-500');
-    btnGrid.classList.add('text-slate-300');
-    btnList.classList.remove('text-slate-300');
-    btnList.classList.add('text-slate-500');
-  });
-  // List view layout: v2
-})();
 </script>
 </body>
 </html>
