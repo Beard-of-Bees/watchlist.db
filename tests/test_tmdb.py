@@ -121,5 +121,6 @@ async def test_enrich_films_found_film():
     film = results["oppenheimer-2023"]
     assert film.tmdb_status == "found"
     assert film.tmdb_id == 872585
+    assert film.year == 2023
     assert film.poster_url == "https://image.tmdb.org/t/p/w300/oppenheimer.jpg"
     assert film.streaming_platforms[0].provider_name == "Netflix"

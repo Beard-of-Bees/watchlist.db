@@ -45,7 +45,7 @@ async def get_movie_details(
     poster_url = f"{TMDB_IMAGE_BASE}/w300{poster_path}" if poster_path else None
 
     release_date = movie_data.get("release_date") or ""
-    year = int(release_date[:4]) if release_date and len(release_date) >= 4 else None
+    year = int(release_date[:4]) if release_date and len(release_date) >= 4 and release_date[:4].isdigit() else None
 
     genres = [g["name"] for g in movie_data.get("genres", [])]
 
