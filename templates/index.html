@@ -1,321 +1,428 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Watchlist</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#256af4",
+            "background-dark": "#101622",
+            "background-light": "#f5f6f8",
+          },
+          fontFamily: { "display": ["Inter", "sans-serif"] },
+          borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+        },
+      },
+    }
+  </script>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
-  <header>
-    <h1>Watchlist</h1>
-    <div class="meta">
-      {% if last_updated %}
-        Last updated: {{ last_updated }}
-      {% else %}
-        No data yet - trigger a refresh below.
-      {% endif %}
-    </div>
-    <button type="button" id="refresh-btn" {% if is_refreshing %}disabled{% endif %}>
-      {% if is_refreshing %}Refreshing...{% else %}Refresh now{% endif %}
-    </button>
-  </header>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen" style="font-family: 'Inter', sans-serif;">
+<div class="flex flex-col min-h-screen">
 
-  <main>
-    {% if not films %}
-      <p class="empty">No films found. Click "Refresh now" to fetch your watchlist.</p>
-    {% else %}
-
-      {% if all_platforms %}
-      <div class="my-services">
-        <button type="button" class="my-services-label" id="manage-btn">My services</button>
-        <div class="active-chips" id="active-chips"></div>
+  <!-- Header -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-6 py-4 lg:px-20">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <!-- Logo + title -->
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="bg-primary p-2 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-white" style="font-size:20px">movie_filter</span>
+        </div>
+        <span class="text-slate-100 text-lg font-bold tracking-tight">Watchlist</span>
       </div>
 
-      <dialog class="services-dialog" id="services-dialog" aria-labelledby="dialog-title">
-        <div class="services-dialog-sheet">
-          <div class="dialog-handle" aria-hidden="true"></div>
-          <div class="services-dialog-header">
-            <h2 class="services-dialog-title" id="dialog-title">Manage services</h2>
-            <button type="button" class="dialog-close-btn" id="dialog-close" aria-label="Close">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="3" y1="3" x2="15" y2="15"/><line x1="15" y1="3" x2="3" y2="15"/>
-              </svg>
-            </button>
-          </div>
-          <div class="services-quickactions">
-            <button type="button" class="btn-link" id="dialog-all">Select all</button>
-            <button type="button" class="btn-link" id="dialog-none">Deselect all</button>
-          </div>
-          <ul class="services-list">
-            {% for p in all_platforms %}
-            <li class="service-item">
-              <label class="service-item-row">
-                <input type="checkbox" class="service-checkbox" data-provider-id="{{ p.provider_id }}" />
-                <div class="service-item-info">
-                  {% if p.logo_path %}<img class="service-item-logo" src="{{ p.logo_path }}" alt="" />{% endif %}
-                  <span class="service-item-name">{{ p.provider_name }}</span>
-                </div>
-                <span class="toggle-visual" aria-hidden="true"></span>
-              </label>
-            </li>
-            {% endfor %}
-          </ul>
-          <div class="services-dialog-footer">
-            <button type="button" class="done-btn" id="dialog-done">Done</button>
-          </div>
+      <!-- Search -->
+      <div class="hidden md:flex flex-1 max-w-md">
+        <div class="relative w-full">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 select-none" style="font-size:18px">search</span>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search your library..."
+            class="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm"
+          />
         </div>
-      </dialog>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="hidden lg:block text-slate-500 text-xs">
+          {% if is_refreshing %}
+            Refreshing…
+          {% elif last_updated %}
+            Updated {{ last_updated }}
+          {% endif %}
+        </span>
+
+        <button
+          type="button"
+          id="refresh-btn"
+          {% if is_refreshing %}disabled{% endif %}
+          class="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors text-slate-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span class="material-symbols-outlined" style="font-size:18px">refresh</span>
+          <span class="hidden sm:inline">{% if is_refreshing %}Refreshing…{% else %}Refresh{% endif %}</span>
+        </button>
+
+        <div class="w-9 h-9 rounded-full border border-white/20 bg-primary/20 flex items-center justify-center text-slate-100 font-semibold text-sm select-none uppercase">
+          {{ username[0] if username else '?' }}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="max-w-7xl mx-auto w-full px-6 lg:px-20 py-8 space-y-8 flex-1">
+
+    {% if not films %}
+      <div class="text-center text-slate-600 mt-24">
+        <span class="material-symbols-outlined block mb-3 text-slate-700" style="font-size:48px">movie_filter</span>
+        <p>No films yet. Click <strong class="text-slate-400">Refresh</strong> to fetch your watchlist.</p>
+      </div>
+    {% else %}
+
+      <!-- My Services -->
+      {% if all_platforms %}
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <button
+            type="button"
+            id="manage-btn"
+            class="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+          >My Services</button>
+        </div>
+        <div id="active-chips" class="flex gap-3 overflow-x-auto pb-1 no-scrollbar"></div>
+
+        <dialog class="services-dialog" id="services-dialog" aria-labelledby="dialog-title">
+          <div class="services-dialog-sheet">
+            <div class="dialog-handle" aria-hidden="true"></div>
+            <div class="services-dialog-header">
+              <h2 class="services-dialog-title" id="dialog-title">Manage services</h2>
+              <button type="button" class="dialog-close-btn" id="dialog-close" aria-label="Close">
+                <span class="material-symbols-outlined" style="font-size:18px">close</span>
+              </button>
+            </div>
+            <div class="services-quickactions">
+              <button type="button" class="btn-link" id="dialog-all">Select all</button>
+              <button type="button" class="btn-link" id="dialog-none">Deselect all</button>
+            </div>
+            <ul class="services-list">
+              {% for p in all_platforms %}
+              <li class="service-item">
+                <label class="service-item-row">
+                  <input type="checkbox" class="service-checkbox" data-provider-id="{{ p.provider_id }}" />
+                  <div class="service-item-info">
+                    {% if p.logo_path %}<img class="service-item-logo" src="{{ p.logo_path }}" alt="" />{% endif %}
+                    <span class="service-item-name">{{ p.provider_name }}</span>
+                  </div>
+                  <span class="toggle-visual" aria-hidden="true"></span>
+                </label>
+              </li>
+              {% endfor %}
+            </ul>
+            <div class="services-dialog-footer">
+              <button type="button" class="done-btn" id="dialog-done">Done</button>
+            </div>
+          </div>
+        </dialog>
+      </section>
       {% endif %}
 
-      <section id="section-streaming" class="film-section" hidden>
-        <h2 class="section-heading">Streaming on your services</h2>
-        <ul class="film-grid" id="grid-streaming"></ul>
-      </section>
-
-      <section id="section-other" class="film-section" hidden>
-        <h2 class="section-heading section-heading--dim">Everything else</h2>
-        <ul class="film-grid" id="grid-other"></ul>
-      </section>
-
-      <ul class="film-grid" id="grid-all">
-        {% for film in films %}
-        <li
-          class="film-card"
-          data-platform-ids="{{ film.streaming_platforms | map(attribute='provider_id') | join(',') }}"
-          data-index="{{ loop.index0 }}"
-        >
-          {% if film.poster_url %}
-            <img src="{{ film.poster_url }}" alt="{{ film.title }}" loading="lazy" />
-          {% else %}
-            <div class="no-poster">No poster</div>
-          {% endif %}
-          <div class="film-info">
-            <h3>{{ film.title }}{% if film.year %} <span class="year">({{ film.year }})</span>{% endif %}</h3>
-            {% if film.streaming_platforms %}
-              <ul class="platforms">
-                {% for platform in film.streaming_platforms %}
-                <li data-provider-id="{{ platform.provider_id }}">
-                  {% if platform.logo_path %}
-                    <img src="{{ platform.logo_path }}" alt="" />
-                    <span>{{ platform.provider_name }}</span>
-                  {% else %}
-                    <span>{{ platform.provider_name }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-              </ul>
-            {% elif film.tmdb_status == "not_found" %}
-              <p class="unavailable">Not found on TMDB</p>
-            {% else %}
-              <p class="unavailable">Not streaming in {{ film.country }}</p>
-            {% endif %}
+      <!-- Streaming section (shown when services filtered) -->
+      <section id="section-streaming" class="space-y-6" hidden>
+        <div class="flex items-end justify-between">
+          <h1 class="text-2xl font-bold text-slate-100">Streaming on your services</h1>
+          <div class="flex gap-2">
+            <button id="view-grid" type="button" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-300" aria-label="Grid view">
+              <span class="material-symbols-outlined" style="font-size:20px">grid_view</span>
+            </button>
+            <button id="view-list" type="button" class="p-2 glass-panel rounded-lg hover:bg-white/10 text-slate-500" aria-label="List view">
+              <span class="material-symbols-outlined" style="font-size:20px">list</span>
+            </button>
           </div>
-        </li>
-        {% endfor %}
-      </ul>
+        </div>
+        <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-streaming"></ul>
+      </section>
+
+      <!-- Everything else section -->
+      <section id="section-other" class="space-y-4" hidden>
+        <h2 class="text-xs font-semibold text-slate-600 uppercase tracking-widest">Everything else</h2>
+        <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-other"></ul>
+      </section>
+
+      <!-- All films grid (default/unfiltered) -->
+      <section id="section-all" class="space-y-6">
+        <h1 class="text-2xl font-bold text-slate-100">Your watchlist</h1>
+        <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-all">
+          {% for film in films %}
+          <li
+            class="film-card group cursor-pointer"
+            data-platform-ids="{{ film.streaming_platforms | map(attribute='provider_id') | join(',') }}"
+            data-index="{{ loop.index0 }}"
+            data-title="{{ film.title | lower }}"
+          >
+            <!-- Poster -->
+            <div class="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-white/5 transition-all duration-300 group-hover:border-primary/50 group-hover:shadow-[0_0_20px_rgba(37,106,244,0.2)]">
+              {% if film.poster_url %}
+                <img src="{{ film.poster_url }}" alt="{{ film.title }}" loading="lazy"
+                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+              {% else %}
+                <div class="w-full h-full bg-white/5 flex items-center justify-center text-slate-600 text-xs">No poster</div>
+              {% endif %}
+
+              <!-- Hover overlay -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-3">
+                {% if film.watch_link %}
+                  <a href="{{ film.watch_link }}" target="_blank" rel="noopener noreferrer"
+                     class="w-full py-2 bg-primary rounded-lg text-white font-bold text-xs text-center hover:bg-primary/90 transition-colors">
+                    Watch Now
+                  </a>
+                {% else %}
+                  <span class="w-full py-2 bg-white/10 rounded-lg text-slate-400 font-bold text-xs text-center cursor-default">
+                    Not streaming
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Film info -->
+            <div class="mt-2 space-y-1 px-0.5">
+              <h4 class="text-slate-100 font-semibold text-sm truncate">{{ film.title }}</h4>
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-slate-400 text-xs truncate">
+                  {%- if film.genres %}{{ film.genres[0] }}{% endif -%}
+                  {%- if film.genres and film.year %} • {% endif -%}
+                  {%- if film.year %}{{ film.year }}{% endif -%}
+                </span>
+                {% if film.streaming_platforms %}
+                  {% set p = film.streaming_platforms[0] %}
+                  <span class="platform-badge shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
+                        data-provider-id="{{ p.provider_id }}">
+                    {{ p.provider_name }}
+                  </span>
+                {% elif film.tmdb_status == "not_found" %}
+                  <span class="text-[10px] text-slate-600">Not on TMDB</span>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
 
     {% endif %}
   </main>
+</div>
 
-  <script>
-  (function () {
-    var STORAGE_KEY = 'watchlist_disabled_services';
+<script>
+(function () {
+  var STORAGE_KEY = 'watchlist_disabled_services';
 
-    var checkboxes = Array.from(document.querySelectorAll('.service-checkbox'));
-    var allIds = checkboxes.map(function (cb) { return parseInt(cb.dataset.providerId); });
+  var checkboxes = Array.from(document.querySelectorAll('.service-checkbox'));
+  var allIds = checkboxes.map(function (cb) { return parseInt(cb.dataset.providerId); });
 
-    // Build provider info map from the dialog's rendered list items
-    var providerInfo = {};
-    document.querySelectorAll('.service-item').forEach(function (item) {
-      var cb = item.querySelector('.service-checkbox');
-      var id = parseInt(cb.dataset.providerId);
-      var name = item.querySelector('.service-item-name').textContent.trim();
-      var img = item.querySelector('.service-item-logo');
-      providerInfo[id] = { name: name, logoSrc: img ? img.src : '' };
+  // Build provider info map from the dialog's rendered list items
+  var providerInfo = {};
+  document.querySelectorAll('.service-item').forEach(function (item) {
+    var cb = item.querySelector('.service-checkbox');
+    var id = parseInt(cb.dataset.providerId);
+    var name = item.querySelector('.service-item-name').textContent.trim();
+    var img = item.querySelector('.service-item-logo');
+    providerInfo[id] = { name: name, logoSrc: img ? img.src : '' };
+  });
+
+  function loadEnabled() {
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === null) return new Set(allIds);
+      var disabled = new Set(JSON.parse(stored));
+      return new Set(allIds.filter(function (id) { return !disabled.has(id); }));
+    } catch (_) {
+      return new Set(allIds);
+    }
+  }
+
+  function saveEnabled(enabled) {
+    var disabled = allIds.filter(function (id) { return !enabled.has(id); });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(disabled));
+  }
+
+  var enabled = loadEnabled();
+
+  function applyActiveChips() {
+    var container = document.getElementById('active-chips');
+    if (!container) return;
+    container.innerHTML = '';
+    var activeIds = allIds.filter(function (id) { return enabled.has(id); });
+    if (activeIds.length === 0) {
+      var hint = document.createElement('span');
+      hint.className = 'no-services-hint';
+      hint.textContent = 'None selected';
+      container.appendChild(hint);
+      return;
+    }
+    activeIds.forEach(function (id) {
+      var info = providerInfo[id];
+      if (!info) return;
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'service-chip';
+      chip.addEventListener('click', function () { dialog.showModal(); });
+      if (info.logoSrc) {
+        var img = document.createElement('img');
+        img.src = info.logoSrc;
+        img.alt = '';
+        chip.appendChild(img);
+      }
+      var nameSpan = document.createElement('span');
+      nameSpan.textContent = info.name;
+      chip.appendChild(nameSpan);
+      container.appendChild(chip);
     });
+  }
 
-    function loadEnabled() {
-      try {
-        var stored = localStorage.getItem(STORAGE_KEY);
-        if (stored === null) return new Set(allIds);
-        var disabled = new Set(JSON.parse(stored));
-        return new Set(allIds.filter(function (id) { return !disabled.has(id); }));
-      } catch (_) {
-        return new Set(allIds);
-      }
-    }
-
-    function saveEnabled(enabled) {
-      var disabled = allIds.filter(function (id) { return !enabled.has(id); });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(disabled));
-    }
-
-    var enabled = loadEnabled();
-
-    function applyActiveChips() {
-      var container = document.getElementById('active-chips');
-      if (!container) return;
-      container.innerHTML = '';
-      var activeIds = allIds.filter(function (id) { return enabled.has(id); });
-      if (activeIds.length === 0) {
-        var hint = document.createElement('span');
-        hint.className = 'no-services-hint';
-        hint.textContent = 'None selected';
-        container.appendChild(hint);
-        return;
-      }
-      activeIds.forEach(function (id) {
-        var info = providerInfo[id];
-        if (!info) return;
-        var chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'service-chip';
-        chip.addEventListener('click', function () { dialog.showModal(); });
-        if (info.logoSrc) {
-          var img = document.createElement('img');
-          img.src = info.logoSrc;
-          img.alt = '';
-          chip.appendChild(img);
-        }
-        var nameSpan = document.createElement('span');
-        nameSpan.textContent = info.name;
-        chip.appendChild(nameSpan);
-        container.appendChild(chip);
-      });
-    }
-
-    function applyDialogStates() {
-      checkboxes.forEach(function (cb) {
-        cb.checked = enabled.has(parseInt(cb.dataset.providerId));
-      });
-    }
-
-    function classify() {
-      var gridAll = document.getElementById('grid-all');
-      var sectionStreaming = document.getElementById('section-streaming');
-      var sectionOther = document.getElementById('section-other');
-      var gridStreaming = document.getElementById('grid-streaming');
-      var gridOther = document.getElementById('grid-other');
-
-      if (!gridAll) return;
-
-      var allCards = Array.from(document.querySelectorAll('.film-card'));
-      var allEnabled = allIds.length === 0 || allIds.every(function (id) { return enabled.has(id); });
-
-      if (allEnabled) {
-        allCards.sort(function (a, b) { return parseInt(a.dataset.index) - parseInt(b.dataset.index); });
-        allCards.forEach(function (card) { gridAll.appendChild(card); });
-        if (sectionStreaming) sectionStreaming.hidden = true;
-        if (sectionOther) sectionOther.hidden = true;
-        gridAll.hidden = false;
-      } else {
-        var streaming = [], other = [];
-        allCards.forEach(function (card) {
-          var raw = card.dataset.platformIds || '';
-          var ids = raw.split(',').filter(Boolean).map(Number);
-          var matches = ids.some(function (id) { return enabled.has(id); });
-          (matches ? streaming : other).push(card);
-        });
-        function byIndex(a, b) { return parseInt(a.dataset.index) - parseInt(b.dataset.index); }
-        streaming.sort(byIndex);
-        other.sort(byIndex);
-        if (gridStreaming) streaming.forEach(function (c) { gridStreaming.appendChild(c); });
-        if (gridOther) other.forEach(function (c) { gridOther.appendChild(c); });
-        gridAll.hidden = true;
-        if (sectionStreaming) sectionStreaming.hidden = streaming.length === 0;
-        if (sectionOther) sectionOther.hidden = other.length === 0;
-      }
-    }
-
-    function filterPlatforms() {
-      document.querySelectorAll('#grid-streaming .platforms li[data-provider-id], #grid-all .platforms li[data-provider-id]').forEach(function (li) {
-        li.hidden = !enabled.has(parseInt(li.dataset.providerId));
-      });
-      document.querySelectorAll('#grid-other .platforms li[data-provider-id]').forEach(function (li) {
-        li.hidden = false;
-      });
-    }
-
-    function update() {
-      applyActiveChips();
-      applyDialogStates();
-      classify();
-      filterPlatforms();
-      saveEnabled(enabled);
-    }
-
-    // --- Dialog ---
-    var dialog = document.getElementById('services-dialog');
-    var manageBtn = document.getElementById('manage-btn');
-    var closeBtn = document.getElementById('dialog-close');
-    var doneBtn = document.getElementById('dialog-done');
-    var dialogAll = document.getElementById('dialog-all');
-    var dialogNone = document.getElementById('dialog-none');
-    var dialogSheet = dialog ? dialog.querySelector('.services-dialog-sheet') : null;
-
-    if (manageBtn && dialog) {
-      manageBtn.addEventListener('click', function () { dialog.showModal(); });
-    }
-    if (closeBtn) closeBtn.addEventListener('click', function () { dialog.close(); });
-    if (doneBtn) doneBtn.addEventListener('click', function () { dialog.close(); });
-
-    // Close on backdrop click (clicks on the dialog element outside its sheet)
-    if (dialog && dialogSheet) {
-      dialogSheet.addEventListener('click', function (e) { e.stopPropagation(); });
-      dialog.addEventListener('click', function () { dialog.close(); });
-    }
-
-    if (dialogAll) dialogAll.addEventListener('click', function () { enabled = new Set(allIds); update(); });
-    if (dialogNone) dialogNone.addEventListener('click', function () { enabled = new Set(); update(); });
-
+  function applyDialogStates() {
     checkboxes.forEach(function (cb) {
-      cb.addEventListener('change', function () {
-        var id = parseInt(cb.dataset.providerId);
-        if (cb.checked) { enabled.add(id); } else { enabled.delete(id); }
-        update();
+      cb.checked = enabled.has(parseInt(cb.dataset.providerId));
+    });
+  }
+
+  function classify() {
+    var gridAll = document.getElementById('grid-all');
+    var sectionStreaming = document.getElementById('section-streaming');
+    var sectionOther = document.getElementById('section-other');
+    var sectionAll = document.getElementById('section-all');
+    var gridStreaming = document.getElementById('grid-streaming');
+    var gridOther = document.getElementById('grid-other');
+
+    if (!gridAll) return;
+
+    var allCards = Array.from(document.querySelectorAll('.film-card'));
+    var allEnabled = allIds.length === 0 || allIds.every(function (id) { return enabled.has(id); });
+
+    if (allEnabled) {
+      allCards.sort(function (a, b) { return parseInt(a.dataset.index) - parseInt(b.dataset.index); });
+      allCards.forEach(function (card) { gridAll.appendChild(card); });
+      if (sectionStreaming) sectionStreaming.hidden = true;
+      if (sectionOther) sectionOther.hidden = true;
+      if (sectionAll) sectionAll.hidden = false;
+      gridAll.hidden = false;
+    } else {
+      var streaming = [], other = [];
+      allCards.forEach(function (card) {
+        var raw = card.dataset.platformIds || '';
+        var ids = raw.split(',').filter(Boolean).map(Number);
+        var matches = ids.some(function (id) { return enabled.has(id); });
+        (matches ? streaming : other).push(card);
       });
+      function byIndex(a, b) { return parseInt(a.dataset.index) - parseInt(b.dataset.index); }
+      streaming.sort(byIndex);
+      other.sort(byIndex);
+      if (gridStreaming) streaming.forEach(function (c) { gridStreaming.appendChild(c); });
+      if (gridOther) other.forEach(function (c) { gridOther.appendChild(c); });
+      gridAll.hidden = true;
+      if (sectionAll) sectionAll.hidden = true;
+      if (sectionStreaming) sectionStreaming.hidden = streaming.length === 0;
+      if (sectionOther) sectionOther.hidden = other.length === 0;
+    }
+  }
+
+  function filterPlatforms() {
+    document.querySelectorAll('#grid-streaming .platforms li[data-provider-id], #grid-all .platforms li[data-provider-id]').forEach(function (li) {
+      li.hidden = !enabled.has(parseInt(li.dataset.providerId));
     });
-
-    update();
-  })();
-
-  // --- Refresh button ---
-  (function () {
-    var btn = document.getElementById('refresh-btn');
-    if (!btn) return;
-
-    var pollInterval = null;
-
-    function setRefreshing(on) {
-      btn.disabled = on;
-      btn.textContent = on ? 'Refreshing...' : 'Refresh now';
-    }
-
-    function pollUntilDone() {
-      pollInterval = setInterval(function () {
-        fetch('/status').then(function (r) { return r.json(); }).then(function (data) {
-          if (!data.is_refreshing) {
-            clearInterval(pollInterval);
-            window.location.reload();
-          }
-        }).catch(function () { clearInterval(pollInterval); setRefreshing(false); });
-      }, 2000);
-    }
-
-    // If the page loaded while already refreshing, start polling immediately
-    if (btn.disabled) {
-      pollUntilDone();
-    }
-
-    btn.addEventListener('click', function () {
-      setRefreshing(true);
-      fetch('/refresh', { method: 'POST' })
-        .then(function (r) { return r.json(); })
-        .then(function () { pollUntilDone(); })
-        .catch(function () { setRefreshing(false); });
+    document.querySelectorAll('#grid-other .platforms li[data-provider-id]').forEach(function (li) {
+      li.hidden = false;
     });
-  })();
-  </script>
+  }
+
+  function update() {
+    applyActiveChips();
+    applyDialogStates();
+    classify();
+    filterPlatforms();
+    saveEnabled(enabled);
+  }
+
+  // --- Dialog ---
+  var dialog = document.getElementById('services-dialog');
+  var manageBtn = document.getElementById('manage-btn');
+  var closeBtn = document.getElementById('dialog-close');
+  var doneBtn = document.getElementById('dialog-done');
+  var dialogAll = document.getElementById('dialog-all');
+  var dialogNone = document.getElementById('dialog-none');
+  var dialogSheet = dialog ? dialog.querySelector('.services-dialog-sheet') : null;
+
+  if (manageBtn && dialog) {
+    manageBtn.addEventListener('click', function () { dialog.showModal(); });
+  }
+  if (closeBtn) closeBtn.addEventListener('click', function () { dialog.close(); });
+  if (doneBtn) doneBtn.addEventListener('click', function () { dialog.close(); });
+
+  // Close on backdrop click (clicks on the dialog element outside its sheet)
+  if (dialog && dialogSheet) {
+    dialogSheet.addEventListener('click', function (e) { e.stopPropagation(); });
+    dialog.addEventListener('click', function () { dialog.close(); });
+  }
+
+  if (dialogAll) dialogAll.addEventListener('click', function () { enabled = new Set(allIds); update(); });
+  if (dialogNone) dialogNone.addEventListener('click', function () { enabled = new Set(); update(); });
+
+  checkboxes.forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      var id = parseInt(cb.dataset.providerId);
+      if (cb.checked) { enabled.add(id); } else { enabled.delete(id); }
+      update();
+    });
+  });
+
+  update();
+})();
+
+// --- Refresh button ---
+(function () {
+  var btn = document.getElementById('refresh-btn');
+  if (!btn) return;
+
+  var pollInterval = null;
+
+  function setRefreshing(on) {
+    btn.disabled = on;
+    btn.querySelector('span.hidden, span.sm\\:inline') && (btn.querySelector('span.hidden, span.sm\\:inline').textContent = on ? 'Refreshing…' : 'Refresh');
+  }
+
+  function pollUntilDone() {
+    pollInterval = setInterval(function () {
+      fetch('/status').then(function (r) { return r.json(); }).then(function (data) {
+        if (!data.is_refreshing) {
+          clearInterval(pollInterval);
+          window.location.reload();
+        }
+      }).catch(function () { clearInterval(pollInterval); setRefreshing(false); });
+    }, 2000);
+  }
+
+  // If the page loaded while already refreshing, start polling immediately
+  if (btn.disabled) {
+    pollUntilDone();
+  }
+
+  btn.addEventListener('click', function () {
+    setRefreshing(true);
+    fetch('/refresh', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function () { pollUntilDone(); })
+      .catch(function () { setRefreshing(false); });
+  });
+})();
+</script>
 </body>
 </html>
