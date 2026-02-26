@@ -72,6 +72,11 @@ async def index(request: Request):
     )
 
 
+@app.get("/status")
+async def status():
+    return {"is_refreshing": scheduler.get_refresh_state()}
+
+
 @app.post("/refresh")
 async def refresh(background_tasks: BackgroundTasks):
     if scheduler.get_refresh_state():

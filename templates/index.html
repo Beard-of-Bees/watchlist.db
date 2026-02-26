@@ -16,11 +16,9 @@
         No data yet - trigger a refresh below.
       {% endif %}
     </div>
-    <form method="post" action="/refresh">
-      <button type="submit" {% if is_refreshing %}disabled{% endif %}>
-        {% if is_refreshing %}Refreshing...{% else %}Refresh now{% endif %}
-      </button>
-    </form>
+    <button type="button" id="refresh-btn" {% if is_refreshing %}disabled{% endif %}>
+      {% if is_refreshing %}Refreshing...{% else %}Refresh now{% endif %}
+    </button>
   </header>
 
   <main>
@@ -280,6 +278,43 @@
     });
 
     update();
+  })();
+
+  // --- Refresh button ---
+  (function () {
+    var btn = document.getElementById('refresh-btn');
+    if (!btn) return;
+
+    var pollInterval = null;
+
+    function setRefreshing(on) {
+      btn.disabled = on;
+      btn.textContent = on ? 'Refreshing...' : 'Refresh now';
+    }
+
+    function pollUntilDone() {
+      pollInterval = setInterval(function () {
+        fetch('/status').then(function (r) { return r.json(); }).then(function (data) {
+          if (!data.is_refreshing) {
+            clearInterval(pollInterval);
+            window.location.reload();
+          }
+        }).catch(function () { clearInterval(pollInterval); setRefreshing(false); });
+      }, 2000);
+    }
+
+    // If the page loaded while already refreshing, start polling immediately
+    if (btn.disabled) {
+      pollUntilDone();
+    }
+
+    btn.addEventListener('click', function () {
+      setRefreshing(true);
+      fetch('/refresh', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function () { pollUntilDone(); })
+        .catch(function () { setRefreshing(false); });
+    });
   })();
   </script>
 </body>
