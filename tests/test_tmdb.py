@@ -27,6 +27,9 @@ TMDB_MOVIE_DETAILS_RESPONSE = {
     "title": "Oppenheimer",
     "release_date": "2023-07-21",
     "poster_path": "/oppenheimer.jpg",
+    "overview": "The story of J. Robert Oppenheimer.",
+    "runtime": 180,
+    "original_language": "en",
     "genres": [{"id": 18, "name": "Drama"}, {"id": 36, "name": "History"}],
 }
 
@@ -62,10 +65,22 @@ async def test_get_movie_details_returns_poster_and_platforms():
         return_value=httpx.Response(200, json=TMDB_WATCH_PROVIDERS_RESPONSE)
     )
     async with httpx.AsyncClient() as client:
-        poster_url, year, genres, platforms, watch_link = await get_movie_details(client, "fake_key", 872585, "GB")
+        (
+            poster_url,
+            year,
+            genres,
+            overview,
+            runtime_minutes,
+            original_language,
+            platforms,
+            watch_link,
+        ) = await get_movie_details(client, "fake_key", 872585, "GB")
     assert poster_url == "https://image.tmdb.org/t/p/w300/oppenheimer.jpg"
     assert year == 2023
     assert genres == ["Drama", "History"]
+    assert overview == "The story of J. Robert Oppenheimer."
+    assert runtime_minutes == 180
+    assert original_language == "en"
     assert len(platforms) == 1
     assert platforms[0].provider_name == "Netflix"
     assert platforms[0].logo_path == "https://image.tmdb.org/t/p/w45/netflix.png"
@@ -81,10 +96,22 @@ async def test_get_movie_details_no_providers_for_country():
         return_value=httpx.Response(200, json={"results": {}})
     )
     async with httpx.AsyncClient() as client:
-        poster_url, year, genres, platforms, watch_link = await get_movie_details(client, "fake_key", 872585, "US")
+        (
+            poster_url,
+            year,
+            genres,
+            overview,
+            runtime_minutes,
+            original_language,
+            platforms,
+            watch_link,
+        ) = await get_movie_details(client, "fake_key", 872585, "US")
     assert poster_url == "https://image.tmdb.org/t/p/w300/oppenheimer.jpg"
     assert year == 2023
     assert genres == ["Drama", "History"]
+    assert overview == "The story of J. Robert Oppenheimer."
+    assert runtime_minutes == 180
+    assert original_language == "en"
     assert platforms == []
     assert watch_link is None
 

@@ -24,6 +24,9 @@ async def test_upsert_and_get_film(tmp_db):
         tmdb_id=872585,
         tmdb_status="found",
         poster_url="https://example.com/poster.jpg",
+        overview="A scientist wrestles with the consequences of his work.",
+        runtime_minutes=180,
+        original_language="en",
         streaming_platforms=[
             StreamingPlatform(provider_id=8, provider_name="Netflix", logo_path="/n.png")
         ],
@@ -36,6 +39,9 @@ async def test_upsert_and_get_film(tmp_db):
     assert len(films) == 1
     assert films[0].title == "Oppenheimer"
     assert films[0].tmdb_id == 872585
+    assert films[0].overview.startswith("A scientist")
+    assert films[0].runtime_minutes == 180
+    assert films[0].original_language == "en"
     assert len(films[0].streaming_platforms) == 1
     assert films[0].streaming_platforms[0].provider_name == "Netflix"
 

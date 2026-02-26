@@ -153,8 +153,10 @@
       </section>
 
       <!-- Everything else section -->
-      <section id="section-other" class="space-y-4" hidden>
-        <h2 class="text-xs font-semibold text-slate-600 uppercase tracking-widest">Everything else</h2>
+      <section id="section-other" class="space-y-6" hidden>
+        <div class="flex items-end justify-between">
+          <h1 class="text-2xl font-bold text-slate-100">Everything else</h1>
+        </div>
         <ul class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 list-none p-0 m-0" id="grid-other"></ul>
       </section>
 
@@ -165,7 +167,20 @@
           {% for film in films %}
           <li
             class="film-card group cursor-pointer"
+            data-film-popup-trigger="true"
+            tabindex="0"
+            role="button"
+            aria-label="Open details for {{ film.title }}"
+            data-film-title="{{ film.title }}"
+            data-film-year="{{ film.year or '' }}"
+            data-film-genres="{{ film.genres | join('||') }}"
+            data-runtime-minutes="{{ film.runtime_minutes or '' }}"
+            data-original-language="{{ film.original_language or '' }}"
+            data-certification=""
+            data-overview="{{ (film.overview or '') | replace('\n', ' ') }}"
+            data-watch-link="{{ film.watch_link or '' }}"
             data-platform-ids="{{ film.streaming_platforms | map(attribute='provider_id') | join(',') }}"
+            data-platform-names="{{ film.streaming_platforms | map(attribute='provider_name') | join('||') }}"
             data-index="{{ loop.index0 }}"
             data-title="{{ film.title | lower }}"
           >
@@ -178,19 +193,6 @@
                 <div class="w-full h-full bg-white/5 flex items-center justify-center text-slate-600 text-xs">No poster</div>
               {% endif %}
 
-              <!-- Hover overlay -->
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex flex-col justify-end p-3">
-                {% if film.watch_link %}
-                  <a href="{{ film.watch_link }}" target="_blank" rel="noopener noreferrer"
-                     class="w-full py-2 bg-primary rounded-lg text-white font-bold text-xs text-center hover:bg-primary/90 transition-colors">
-                    TMDB
-                  </a>
-                {% else %}
-                  <span class="w-full py-2 bg-white/10 rounded-lg text-slate-400 font-bold text-xs text-center cursor-default">
-                    Not streaming
-                  </span>
-                {% endif %}
-              </div>
             </div>
 
             <!-- Film info -->
@@ -204,9 +206,12 @@
                 </span>
                 {% if film.streaming_platforms %}
                   {% set p = film.streaming_platforms[0] %}
-                  <span class="platform-badge shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
-                        data-provider-id="{{ p.provider_id }}">
-                    {{ p.provider_name }}
+                  <span class="platform-summary shrink-0 inline-flex items-center gap-1">
+                    <span class="platform-badge shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
+                          data-provider-id="{{ p.provider_id }}">
+                      {{ p.provider_name }}
+                    </span>
+                    <span class="platform-extra text-[10px] text-slate-400 font-semibold" hidden></span>
                   </span>
                 {% elif film.tmdb_status == "not_found" %}
                   <span class="text-[10px] text-slate-600">Not on TMDB</span>
@@ -217,6 +222,58 @@
           {% endfor %}
         </ul>
       </section>
+
+      <dialog class="services-dialog" id="film-dialog" aria-labelledby="film-dialog-title">
+        <div class="services-dialog-sheet max-w-2xl">
+          <div class="dialog-handle" aria-hidden="true"></div>
+          <div class="services-dialog-header">
+            <h2 class="services-dialog-title" id="film-dialog-title">Film details</h2>
+            <button type="button" class="dialog-close-btn" id="film-dialog-close" aria-label="Close film details">
+              <span class="material-symbols-outlined" style="font-size:18px">close</span>
+            </button>
+          </div>
+
+          <div class="px-4 sm:px-5 pb-5 space-y-4">
+            <div class="space-y-2">
+              <div id="film-dialog-meta-primary" class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-300">
+                <span id="film-dialog-year" hidden></span>
+                <span id="film-dialog-genres" hidden></span>
+              </div>
+              <div id="film-dialog-meta-secondary" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                <span id="film-dialog-runtime-wrap" hidden>Runtime: <span id="film-dialog-runtime"></span></span>
+                <span id="film-dialog-language-wrap" hidden>Language: <span id="film-dialog-language"></span></span>
+                <span id="film-dialog-certification-wrap" hidden>Certification: <span id="film-dialog-certification"></span></span>
+              </div>
+            </div>
+
+            <section class="space-y-2">
+              <h3 class="text-sm font-semibold text-slate-200">Streaming services</h3>
+              <div id="film-dialog-services-active-wrap" class="space-y-2" hidden>
+                <div class="text-[11px] font-semibold uppercase tracking-wide text-primary">On your services</div>
+                <div id="film-dialog-services-active" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div id="film-dialog-services-other-wrap" class="space-y-2" hidden>
+                <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Other services</div>
+                <div id="film-dialog-services-other" class="flex flex-wrap gap-2"></div>
+              </div>
+              <p id="film-dialog-services-empty" class="text-xs text-slate-500" hidden>No streaming services listed.</p>
+            </section>
+
+            <section class="space-y-2">
+              <h3 class="text-sm font-semibold text-slate-200">Synopsis</h3>
+              <p id="film-dialog-synopsis" class="text-sm leading-6 text-slate-300"></p>
+            </section>
+
+            <div class="pt-1">
+              <a id="film-dialog-tmdb-link" href="#" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors">
+                <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span>
+                <span>TMDB</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </dialog>
 
     {% endif %}
   </main>
@@ -344,11 +401,179 @@
     });
   }
 
+  function getCardPlatforms(card) {
+    var ids = (card.dataset.platformIds || '').split(',').filter(Boolean).map(Number);
+    var names = (card.dataset.platformNames || '').split('||');
+    return ids.map(function (id, i) {
+      return { provider_id: id, provider_name: names[i] || '' };
+    });
+  }
+
+  function getRelevantPlatforms(card) {
+    var platforms = getCardPlatforms(card);
+    var parentId = card.parentElement ? card.parentElement.id : '';
+    if (parentId === 'grid-streaming') {
+      return platforms.filter(function (p) { return enabled.has(p.provider_id); });
+    }
+    // "Everything else" and default "all" view show all services on the film.
+    return platforms;
+  }
+
+  function updatePlatformSummaries() {
+    document.querySelectorAll('.film-card').forEach(function (card) {
+      var summary = card.querySelector('.platform-summary');
+      if (!summary) return;
+
+      var badge = summary.querySelector('.platform-badge');
+      var extra = summary.querySelector('.platform-extra');
+      if (!badge || !extra) return;
+
+      var relevant = getRelevantPlatforms(card);
+      if (!relevant.length) {
+        summary.hidden = true;
+        return;
+      }
+
+      summary.hidden = false;
+      badge.textContent = relevant[0].provider_name;
+      badge.dataset.providerId = String(relevant[0].provider_id);
+
+      if (relevant.length > 1) {
+        extra.textContent = '+' + (relevant.length - 1);
+        extra.hidden = false;
+      } else {
+        extra.textContent = '';
+        extra.hidden = true;
+      }
+    });
+
+    if (window.applyPlatformBadgeColours) window.applyPlatformBadgeColours(document);
+  }
+
+  function escapeText(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderServiceChip(provider, primary) {
+    var cls = primary
+      ? 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border border-primary/40 bg-primary/10 text-primary'
+      : 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border border-white/10 bg-white/5 text-slate-300';
+    return '<span class="' + cls + '">' + escapeText(provider.provider_name) + '</span>';
+  }
+
+  function formatRuntime(minutes) {
+    var n = parseInt(minutes, 10);
+    if (!n) return '';
+    var h = Math.floor(n / 60);
+    var m = n % 60;
+    if (h && m) return h + 'h ' + m + 'm';
+    if (h) return h + 'h';
+    return m + 'm';
+  }
+
+  function formatLanguage(code) {
+    if (!code) return '';
+    return String(code).toUpperCase();
+  }
+
+  function openFilmDialog(card) {
+    var filmDialog = document.getElementById('film-dialog');
+    if (!filmDialog) return;
+
+    var titleEl = document.getElementById('film-dialog-title');
+    var yearEl = document.getElementById('film-dialog-year');
+    var genresEl = document.getElementById('film-dialog-genres');
+    var runtimeWrap = document.getElementById('film-dialog-runtime-wrap');
+    var runtimeEl = document.getElementById('film-dialog-runtime');
+    var languageWrap = document.getElementById('film-dialog-language-wrap');
+    var languageEl = document.getElementById('film-dialog-language');
+    var certificationWrap = document.getElementById('film-dialog-certification-wrap');
+    var certificationEl = document.getElementById('film-dialog-certification');
+    var activeWrap = document.getElementById('film-dialog-services-active-wrap');
+    var activeEl = document.getElementById('film-dialog-services-active');
+    var otherWrap = document.getElementById('film-dialog-services-other-wrap');
+    var otherEl = document.getElementById('film-dialog-services-other');
+    var emptyEl = document.getElementById('film-dialog-services-empty');
+    var synopsisEl = document.getElementById('film-dialog-synopsis');
+    var tmdbLinkEl = document.getElementById('film-dialog-tmdb-link');
+
+    var title = card.dataset.filmTitle || '';
+    var year = card.dataset.filmYear || '';
+    var genres = (card.dataset.filmGenres || '').split('||').filter(Boolean);
+    var runtime = formatRuntime(card.dataset.runtimeMinutes || '');
+    var language = formatLanguage(card.dataset.originalLanguage || '');
+    var certification = card.dataset.certification || '';
+    var overview = (card.dataset.overview || '').trim();
+    var tmdbLink = card.dataset.watchLink || '';
+    var platforms = getCardPlatforms(card);
+    var activePlatforms = platforms.filter(function (p) { return enabled.has(p.provider_id); });
+    var otherPlatforms = platforms.filter(function (p) { return !enabled.has(p.provider_id); });
+
+    if (titleEl) titleEl.textContent = title || 'Film details';
+
+    if (yearEl) {
+      yearEl.textContent = year;
+      yearEl.hidden = !year;
+    }
+    if (genresEl) {
+      genresEl.textContent = genres.join(' • ');
+      genresEl.hidden = genres.length === 0;
+    }
+    if (runtimeWrap && runtimeEl) {
+      runtimeEl.textContent = runtime;
+      runtimeWrap.hidden = !runtime;
+    }
+    if (languageWrap && languageEl) {
+      languageEl.textContent = language;
+      languageWrap.hidden = !language;
+    }
+    if (certificationWrap && certificationEl) {
+      certificationEl.textContent = certification;
+      certificationWrap.hidden = !certification;
+    }
+
+    if (activeEl && activeWrap) {
+      activeEl.innerHTML = activePlatforms.map(function (p) { return renderServiceChip(p, true); }).join('');
+      activeWrap.hidden = activePlatforms.length === 0;
+    }
+    if (otherEl && otherWrap) {
+      otherEl.innerHTML = otherPlatforms.map(function (p) { return renderServiceChip(p, false); }).join('');
+      otherWrap.hidden = otherPlatforms.length === 0;
+    }
+    if (emptyEl) emptyEl.hidden = (activePlatforms.length + otherPlatforms.length) > 0;
+
+    if (synopsisEl) {
+      synopsisEl.textContent = overview || 'No synopsis available.';
+    }
+
+    if (tmdbLinkEl) {
+      if (tmdbLink) {
+        tmdbLinkEl.href = tmdbLink;
+        tmdbLinkEl.hidden = false;
+        tmdbLinkEl.classList.remove('pointer-events-none', 'opacity-50');
+        tmdbLinkEl.setAttribute('aria-disabled', 'false');
+      } else {
+        tmdbLinkEl.href = '#';
+        tmdbLinkEl.hidden = true;
+        tmdbLinkEl.classList.add('pointer-events-none', 'opacity-50');
+        tmdbLinkEl.setAttribute('aria-disabled', 'true');
+      }
+    }
+
+    filmDialog.showModal();
+  }
+
   function update() {
     applyActiveChips();
     applyDialogStates();
     classify();
     filterPlatforms();
+    updatePlatformSummaries();
     saveEnabled(enabled);
   }
 
@@ -360,6 +585,9 @@
   var dialogAll = document.getElementById('dialog-all');
   var dialogNone = document.getElementById('dialog-none');
   var dialogSheet = dialog ? dialog.querySelector('.services-dialog-sheet') : null;
+  var filmDialog = document.getElementById('film-dialog');
+  var filmDialogClose = document.getElementById('film-dialog-close');
+  var filmDialogSheet = filmDialog ? filmDialog.querySelector('.services-dialog-sheet') : null;
 
   if (manageBtn && dialog) {
     manageBtn.addEventListener('click', function () { dialog.showModal(); });
@@ -383,6 +611,22 @@
       update();
     });
   });
+
+  document.querySelectorAll('.film-card[data-film-popup-trigger="true"]').forEach(function (card) {
+    card.addEventListener('click', function () { openFilmDialog(card); });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openFilmDialog(card);
+      }
+    });
+  });
+
+  if (filmDialogClose) filmDialogClose.addEventListener('click', function () { filmDialog.close(); });
+  if (filmDialog && filmDialogSheet) {
+    filmDialogSheet.addEventListener('click', function (e) { e.stopPropagation(); });
+    filmDialog.addEventListener('click', function () { filmDialog.close(); });
+  }
 
   update();
 })();
@@ -438,12 +682,16 @@
   };
   var DEFAULT_COLOUR = { text: '#94a3b8', bg: 'rgba(148,163,184,0.1)' };
 
-  document.querySelectorAll('.platform-badge[data-provider-id]').forEach(function (el) {
-    var id = parseInt(el.dataset.providerId);
-    var c = PROVIDER_COLOURS[id] || DEFAULT_COLOUR;
-    el.style.color = c.text;
-    el.style.background = c.bg;
-  });
+  window.applyPlatformBadgeColours = function (root) {
+    (root || document).querySelectorAll('.platform-badge[data-provider-id]').forEach(function (el) {
+      var id = parseInt(el.dataset.providerId);
+      var c = PROVIDER_COLOURS[id] || DEFAULT_COLOUR;
+      el.style.color = c.text;
+      el.style.background = c.bg;
+    });
+  };
+
+  window.applyPlatformBadgeColours(document);
 })();
 
 // --- Search ---

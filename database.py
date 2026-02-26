@@ -22,6 +22,9 @@ async def init_db(db_path: Path = DB_PATH) -> None:
                 tmdb_id             INTEGER,
                 tmdb_status         TEXT DEFAULT 'pending',
                 poster_url          TEXT,
+                overview            TEXT,
+                runtime_minutes     INTEGER,
+                original_language   TEXT,
                 genres              TEXT,
                 streaming_platforms TEXT,
                 watch_link          TEXT,
@@ -33,6 +36,9 @@ async def init_db(db_path: Path = DB_PATH) -> None:
         )
         # Safe migration: add new columns if they don't exist yet (for existing installs)
         for col, definition in [
+            ("overview", "TEXT"),
+            ("runtime_minutes", "INTEGER"),
+            ("original_language", "TEXT"),
             ("genres", "TEXT"),
             ("watch_link", "TEXT"),
         ]:
@@ -51,15 +57,19 @@ async def upsert_film(film: Film, db_path: Path = DB_PATH) -> None:
             """
             INSERT INTO films
                 (letterboxd_slug, title, year, tmdb_id, tmdb_status,
-                 poster_url, genres, streaming_platforms, watch_link,
+                 poster_url, overview, runtime_minutes, original_language,
+                 genres, streaming_platforms, watch_link,
                  country, last_checked, source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(letterboxd_slug) DO UPDATE SET
                 title               = excluded.title,
                 year                = excluded.year,
                 tmdb_id             = excluded.tmdb_id,
                 tmdb_status         = excluded.tmdb_status,
                 poster_url          = excluded.poster_url,
+                overview            = excluded.overview,
+                runtime_minutes     = excluded.runtime_minutes,
+                original_language   = excluded.original_language,
                 genres              = excluded.genres,
                 streaming_platforms = excluded.streaming_platforms,
                 watch_link          = excluded.watch_link,
@@ -74,6 +84,9 @@ async def upsert_film(film: Film, db_path: Path = DB_PATH) -> None:
                 film.tmdb_id,
                 film.tmdb_status,
                 film.poster_url,
+                film.overview,
+                film.runtime_minutes,
+                film.original_language,
                 genres_json,
                 platforms_json,
                 film.watch_link,
@@ -115,6 +128,9 @@ def _row_to_film(row: aiosqlite.Row) -> Film:
         tmdb_id=row["tmdb_id"],
         tmdb_status=row["tmdb_status"],
         poster_url=row["poster_url"],
+        overview=row["overview"],
+        runtime_minutes=row["runtime_minutes"],
+        original_language=row["original_language"],
         genres=genres,
         streaming_platforms=platforms,
         watch_link=row["watch_link"],

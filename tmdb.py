@@ -27,8 +27,17 @@ async def search_movie(client: httpx.AsyncClient, api_key: str, title: str) -> O
 
 async def get_movie_details(
     client: httpx.AsyncClient, api_key: str, tmdb_id: int, country: str
-) -> tuple[Optional[str], Optional[int], list[str], list[StreamingPlatform], Optional[str]]:
-    """Fetch poster URL, year, genres, flatrate streaming providers, and watch link for a film."""
+) -> tuple[
+    Optional[str],
+    Optional[int],
+    list[str],
+    Optional[str],
+    Optional[int],
+    Optional[str],
+    list[StreamingPlatform],
+    Optional[str],
+]:
+    """Fetch poster URL, year, genres, overview/runtime/language, providers, and watch link."""
     async with _semaphore:
         movie_resp, providers_resp = await asyncio.gather(
             client.get(f"{TMDB_BASE}/movie/{tmdb_id}", params={"api_key": api_key}),
@@ -48,6 +57,10 @@ async def get_movie_details(
     year = int(release_date[:4]) if release_date and len(release_date) >= 4 and release_date[:4].isdigit() else None
 
     genres = [g["name"] for g in movie_data.get("genres", [])]
+    overview = movie_data.get("overview") or None
+    runtime_raw = movie_data.get("runtime")
+    runtime_minutes = runtime_raw if isinstance(runtime_raw, int) else None
+    original_language = movie_data.get("original_language") or None
 
     country_data = providers_resp.json().get("results", {}).get(country, {})
     flatrate = country_data.get("flatrate", [])
@@ -60,7 +73,16 @@ async def get_movie_details(
         for p in flatrate
     ]
     watch_link = country_data.get("link")
-    return poster_url, year, genres, platforms, watch_link
+    return (
+        poster_url,
+        year,
+        genres,
+        overview,
+        runtime_minutes,
+        original_language,
+        platforms,
+        watch_link,
+    )
 
 
 async def _enrich_one(
@@ -79,7 +101,16 @@ async def _enrich_one(
         )
 
     try:
-        poster_url, year, genres, platforms, watch_link = await get_movie_details(client, api_key, tmdb_id, country)
+        (
+            poster_url,
+            year,
+            genres,
+            overview,
+            runtime_minutes,
+            original_language,
+            platforms,
+            watch_link,
+        ) = await get_movie_details(client, api_key, tmdb_id, country)
     except Exception:
         return Film(
             letterboxd_slug=scraped.slug,
@@ -97,6 +128,9 @@ async def _enrich_one(
         tmdb_id=tmdb_id,
         tmdb_status="found",
         poster_url=poster_url,
+        overview=overview,
+        runtime_minutes=runtime_minutes,
+        original_language=original_language,
         genres=genres,
         streaming_platforms=platforms,
         watch_link=watch_link,

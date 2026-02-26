@@ -26,3 +26,17 @@ def test_film_with_platforms():
     )
     assert len(film.streaming_platforms) == 1
     assert film.streaming_platforms[0].provider_name == "Netflix"
+
+
+def test_film_accepts_popup_metadata_fields():
+    film = Film(
+        letterboxd_slug="oppenheimer-2023",
+        title="Oppenheimer",
+        overview="A dramatization of J. Robert Oppenheimer's life.",
+        runtime_minutes=180,
+        original_language="en",
+    )
+
+    assert film.overview.startswith("A dramatization")
+    assert film.runtime_minutes == 180
+    assert film.original_language == "en"

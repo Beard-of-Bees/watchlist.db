@@ -115,3 +115,40 @@ def test_index_passes_all_platforms_to_template(client):
     assert response.status_code == 200
     assert 'data-provider-id="8"' in response.text
     assert 'data-platform-ids="8"' in response.text
+
+
+def test_index_renders_film_popup_hooks_and_shell(client):
+    films = [
+        Film(
+            letterboxd_slug="oppenheimer-2023",
+            title="Oppenheimer",
+            year=2023,
+            tmdb_status="found",
+            genres=["Drama", "History"],
+            overview="The story of J. Robert Oppenheimer.",
+            runtime_minutes=180,
+            original_language="en",
+            watch_link="https://www.themoviedb.org/movie/872585",
+            streaming_platforms=[
+                StreamingPlatform(provider_id=8, provider_name="Netflix"),
+                StreamingPlatform(provider_id=9, provider_name="Prime Video"),
+            ],
+        )
+    ]
+    with (
+        patch("main.database.get_all_films", new=AsyncMock(return_value=films)),
+        patch("main.database.get_last_updated", new=AsyncMock(return_value=None)),
+    ):
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'data-film-popup-trigger="true"' in response.text
+    assert 'data-overview="The story of J. Robert Oppenheimer.' in response.text
+    assert 'data-runtime-minutes="180"' in response.text
+    assert 'data-original-language="en"' in response.text
+    assert 'id="film-dialog"' in response.text
+    assert 'id="film-dialog-title"' in response.text
+    assert 'id="film-dialog-services-active"' in response.text
+    assert 'id="film-dialog-services-other"' in response.text
+    assert 'id="film-dialog-synopsis"' in response.text
+    assert 'id="film-dialog-tmdb-link"' in response.text
