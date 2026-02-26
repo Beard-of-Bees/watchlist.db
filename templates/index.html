@@ -560,10 +560,8 @@
   }
 
   function renderServiceChip(provider, primary) {
-    var cls = primary
-      ? 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border border-primary/40 bg-primary/10 text-primary'
-      : 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border border-white/10 bg-white/5 text-slate-300';
-    return '<span class="' + cls + '">' + escapeText(provider.provider_name) + '</span>';
+    var cls = 'platform-badge film-list-service-badge text-[10px] font-semibold px-2 py-1 rounded whitespace-nowrap';
+    return '<span class="' + cls + '" data-provider-id="' + String(provider.provider_id) + '">' + escapeText(provider.provider_name) + '</span>';
   }
 
   function formatRuntime(minutes) {
@@ -646,6 +644,7 @@
       otherWrap.hidden = otherPlatforms.length === 0;
     }
     if (emptyEl) emptyEl.hidden = (activePlatforms.length + otherPlatforms.length) > 0;
+    if (window.applyPlatformBadgeColours) window.applyPlatformBadgeColours(filmDialog);
 
     if (synopsisEl) {
       synopsisEl.textContent = overview || 'No synopsis available.';
