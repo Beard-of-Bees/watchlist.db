@@ -79,7 +79,7 @@
             {% if film.streaming_platforms %}
               <ul class="platforms">
                 {% for platform in film.streaming_platforms %}
-                <li>
+                <li data-provider-id="{{ platform.provider_id }}">
                   {% if platform.logo_path %}
                     <img src="{{ platform.logo_path }}" alt="{{ platform.provider_name }}" title="{{ platform.provider_name }}" />
                   {% else %}
@@ -176,8 +176,16 @@
       }
     }
 
+    function filterPlatforms() {
+      document.querySelectorAll('.platforms li[data-provider-id]').forEach(function (li) {
+        var id = parseInt(li.dataset.providerId);
+        li.hidden = !enabled.has(id);
+      });
+    }
+
     function update() {
       applyChips();
+      filterPlatforms();
       classify();
       saveEnabled(enabled);
     }

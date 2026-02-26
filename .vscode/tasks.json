@@ -4,7 +4,7 @@
     {
       "label": "Deploy to VM",
       "type": "shell",
-      "command": "ssh vm \"cd /home/ubuntu/docker-sites/watchlistdb && git pull && cd .. && docker compose up -d --build watchlistdb\"",
+      "command": "ssh vm 'cd /home/ubuntu/docker-sites/watchlistdb && git pull && cd .. && docker compose up -d --build watchlistdb'",
       "group": "build",
       "presentation": {
         "reveal": "always",
