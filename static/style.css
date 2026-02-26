@@ -14,13 +14,16 @@
 
 .services-dialog {
   padding: 0;
-  border: 1px solid #2a2a2a;
-  border-radius: 14px;
-  background: #161616;
-  color: #e0e0e0;
-  max-width: 460px;
-  width: calc(100% - 32px);
-  max-height: min(600px, calc(100dvh - 80px));
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  max-height: min(72dvh, 680px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(16, 22, 34, 0.88);
+  color: #e2e8f0;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   overflow: hidden;
   display: none;
   flex-direction: column;
@@ -30,8 +33,9 @@
   animation: dialog-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .services-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(6, 10, 18, 0.58);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   animation: backdrop-in 0.2s ease both;
 }
 @keyframes dialog-in {
@@ -42,9 +46,11 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .services-dialog {
-    max-width: 100%; width: 100%; max-height: 85dvh;
+    max-width: 100%;
+    width: 100%;
+    max-height: 86dvh;
     border-bottom-left-radius: 0; border-bottom-right-radius: 0;
     margin: auto 0 0;
   }
@@ -55,65 +61,98 @@
 }
 .services-dialog-sheet { display: flex; flex-direction: column; overflow: hidden; flex: 1; }
 .dialog-handle {
-  width: 36px; height: 4px; background: #2e2e2e; border-radius: 999px;
-  margin: 12px auto 0; display: none; flex-shrink: 0;
+  width: 42px; height: 5px; background: rgba(226, 232, 240, 0.22); border-radius: 999px;
+  margin: 12px auto 2px; display: none; flex-shrink: 0;
 }
-@media (max-width: 560px) { .dialog-handle { display: block; } }
+@media (max-width: 640px) { .dialog-handle { display: block; } }
 .services-dialog-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 20px 0; flex-shrink: 0;
+  padding: 16px 18px 8px; flex-shrink: 0;
+  gap: 12px;
 }
-.services-dialog-title { font-size: 1rem; font-weight: 600; color: #e0e0e0; }
+.services-dialog-title { font-size: 1rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em; }
 .dialog-close-btn {
   display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; background: none; border: none;
-  color: #555; cursor: pointer; border-radius: 6px; padding: 0;
-  transition: color 0.15s, background 0.15s;
+  width: 34px; height: 34px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1; cursor: pointer; border-radius: 10px; padding: 0;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-.dialog-close-btn:hover { color: #e0e0e0; background: #242424; }
+.dialog-close-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.14); }
+.dialog-close-btn:focus-visible { outline: 2px solid rgba(37, 106, 244, 0.55); outline-offset: 2px; }
 .services-quickactions {
-  display: flex; gap: 4px; padding: 10px 20px 8px;
-  flex-shrink: 0; border-bottom: 1px solid #1e1e1e;
+  display: flex; gap: 8px; padding: 8px 18px 10px;
+  flex-shrink: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .btn-link {
-  background: none; border: none; color: #555; font-size: 0.8rem;
-  cursor: pointer; padding: 4px 8px; border-radius: 4px;
-  transition: color 0.15s, background 0.15s;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd5e1; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; padding: 6px 10px; border-radius: 999px;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
-.btn-link:hover { color: #aaa; background: #1e1e1e; }
-.services-list { list-style: none; overflow-y: auto; flex: 1; padding: 6px 0; }
+.btn-link:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.14); }
+.btn-link:focus-visible { outline: 2px solid rgba(37, 106, 244, 0.55); outline-offset: 2px; }
+.services-list { list-style: none; overflow-y: auto; flex: 1; padding: 8px 0 10px; }
 .service-item-row {
   position: relative; display: flex; align-items: center; gap: 12px;
-  padding: 10px 20px; cursor: pointer; transition: background 0.12s;
+  padding: 11px 18px; min-height: 52px; cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
 }
-.service-item-row:hover { background: #1c1c1c; }
+.service-item-row:hover { background: rgba(255, 255, 255, 0.04); }
+.service-item-row:has(.service-checkbox:not(:checked)) { color: #a7b4c7; }
+.service-item-row:has(.service-checkbox:not(:checked)):hover { background: rgba(255, 255, 255, 0.025); }
+.service-item-row:focus-within {
+  background: rgba(37, 106, 244, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(37, 106, 244, 0.25);
+}
 .service-checkbox {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 .service-item-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-.service-item-logo { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
-.service-item-name { font-size: 0.88rem; color: #bbb; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.service-item-logo {
+  width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.service-item-name { font-size: 0.9rem; color: #dbe5f2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.service-item-row:has(.service-checkbox:not(:checked)) .service-item-logo { opacity: 0.62; filter: saturate(0.7); }
+.service-item-row:has(.service-checkbox:not(:checked)) .service-item-name { color: #95a4b8; }
 .toggle-visual {
   position: relative; width: 42px; height: 24px; border-radius: 999px;
-  background: #262626; border: 1px solid #333; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0;
   transition: background 0.18s, border-color 0.18s;
 }
 .toggle-visual::after {
   content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
-  background: #444; top: 2px; left: 2px;
+  background: #94a3b8; top: 2px; left: 2px;
   transition: transform 0.2s cubic-bezier(0.34, 1.3, 0.64, 1), background 0.18s;
 }
-.service-checkbox:checked ~ .toggle-visual { background: #e8e8e8; border-color: #e8e8e8; }
-.service-checkbox:checked ~ .toggle-visual::after { transform: translateX(18px); background: #161616; }
-.service-checkbox:focus-visible ~ .toggle-visual { outline: 2px solid #888; outline-offset: 3px; }
-.services-dialog-footer { padding: 12px 20px 16px; flex-shrink: 0; border-top: 1px solid #1e1e1e; }
-.done-btn {
-  width: 100%; padding: 10px; background: #e0e0e0; color: #0f0f0f;
-  border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 600;
-  cursor: pointer; transition: background 0.15s;
+.service-checkbox:checked ~ .toggle-visual {
+  background: rgba(37, 106, 244, 0.32);
+  border-color: rgba(37, 106, 244, 0.62);
 }
-.done-btn:hover { background: #fff; }
+.service-checkbox:checked ~ .toggle-visual::after { transform: translateX(18px); background: #dbeafe; }
+.service-checkbox:focus-visible ~ .toggle-visual { outline: 2px solid rgba(37, 106, 244, 0.55); outline-offset: 3px; }
+.services-dialog-footer {
+  position: sticky; bottom: 0;
+  padding: 12px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(to top, rgba(16, 22, 34, 0.97), rgba(16, 22, 34, 0.92));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.done-btn {
+  width: 100%; padding: 11px 12px; background: #256af4; color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 10px 24px rgba(37, 106, 244, 0.22);
+}
+.done-btn:hover { background: #1f5ede; }
+.done-btn:focus-visible { outline: 2px solid rgba(147, 197, 253, 0.75); outline-offset: 2px; }
 
 /* Service chips (active chips bar) */
 .service-chip {
