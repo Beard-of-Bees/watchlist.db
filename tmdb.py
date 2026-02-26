@@ -97,7 +97,9 @@ async def _enrich_one(
         tmdb_id=tmdb_id,
         tmdb_status="found",
         poster_url=poster_url,
+        genres=genres,
         streaming_platforms=platforms,
+        watch_link=watch_link,
         country=country,
         last_checked=now,
     )

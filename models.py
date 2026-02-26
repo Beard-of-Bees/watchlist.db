@@ -17,7 +17,9 @@ class Film(BaseModel):
     tmdb_id: Optional[int] = None
     tmdb_status: str = "pending"  # pending | found | not_found | error
     poster_url: Optional[str] = None
+    genres: list[str] = Field(default_factory=list)
     streaming_platforms: list[StreamingPlatform] = Field(default_factory=list)
+    watch_link: Optional[str] = None
     country: Optional[str] = None
     last_checked: Optional[str] = None  # ISO timestamp string
     source: str = "letterboxd"
