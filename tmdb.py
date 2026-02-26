@@ -27,8 +27,8 @@ async def search_movie(client: httpx.AsyncClient, api_key: str, title: str) -> O
 
 async def get_movie_details(
     client: httpx.AsyncClient, api_key: str, tmdb_id: int, country: str
-) -> tuple[Optional[str], list[StreamingPlatform]]:
-    """Fetch poster URL and flatrate streaming providers for a film."""
+) -> tuple[Optional[str], Optional[int], list[str], list[StreamingPlatform], Optional[str]]:
+    """Fetch poster URL, year, genres, flatrate streaming providers, and watch link for a film."""
     async with _semaphore:
         movie_resp, providers_resp = await asyncio.gather(
             client.get(f"{TMDB_BASE}/movie/{tmdb_id}", params={"api_key": api_key}),
@@ -40,8 +40,14 @@ async def get_movie_details(
     movie_resp.raise_for_status()
     providers_resp.raise_for_status()
 
-    poster_path = movie_resp.json().get("poster_path")
+    movie_data = movie_resp.json()
+    poster_path = movie_data.get("poster_path")
     poster_url = f"{TMDB_IMAGE_BASE}/w300{poster_path}" if poster_path else None
+
+    release_date = movie_data.get("release_date") or ""
+    year = int(release_date[:4]) if release_date and len(release_date) >= 4 else None
+
+    genres = [g["name"] for g in movie_data.get("genres", [])]
 
     country_data = providers_resp.json().get("results", {}).get(country, {})
     flatrate = country_data.get("flatrate", [])
@@ -53,7 +59,8 @@ async def get_movie_details(
         )
         for p in flatrate
     ]
-    return poster_url, platforms
+    watch_link = country_data.get("link")
+    return poster_url, year, genres, platforms, watch_link
 
 
 async def _enrich_one(
@@ -72,7 +79,7 @@ async def _enrich_one(
         )
 
     try:
-        poster_url, platforms = await get_movie_details(client, api_key, tmdb_id, country)
+        poster_url, year, genres, platforms, watch_link = await get_movie_details(client, api_key, tmdb_id, country)
     except Exception:
         return Film(
             letterboxd_slug=scraped.slug,
@@ -86,6 +93,7 @@ async def _enrich_one(
     return Film(
         letterboxd_slug=scraped.slug,
         title=scraped.title,
+        year=year,
         tmdb_id=tmdb_id,
         tmdb_status="found",
         poster_url=poster_url,
