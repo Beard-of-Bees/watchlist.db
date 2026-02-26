@@ -7,3 +7,6 @@ __pycache__/
 dist/
 .venv/
 .vscode/
+docs/
+BRIEF.md
+CLAUDE.md
