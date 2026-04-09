@@ -1,5 +1,7 @@
 # watchlist.db
 
+![watchlist.db](https://github.com/user-attachments/assets/c3345629-d16a-4b76-84c9-2e12cc5f0133)
+
 Self-hosted web app that shows your Letterboxd watchlist alongside streaming availability for your country.
 
 ## Requirements
